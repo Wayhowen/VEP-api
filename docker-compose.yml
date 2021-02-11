@@ -1,0 +1,41 @@
+version: "3.1"
+
+services:
+  api_external:
+    image: api_external
+    build:
+      context: api_external/.
+      dockerfile: Dockerfile
+    volumes:
+      - ${PWD}/api_external/:/code
+    ports:
+      - "8000:8000"
+    networks:
+      - vep
+    tty: true
+    stdin_open: true
+    #    command: sh -c "python"
+    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=api_external.settings.base"
+
+  api_internal:
+    image: api_internal
+    build:
+      context: api_internal/.
+      dockerfile: Dockerfile
+    volumes:
+      - ${PWD}/api_internal/:/code
+    ports:
+      - "8001:8000"
+    networks:
+      - vep
+    tty: true
+    stdin_open: true
+    #    command: sh -c "python"
+    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=api_internal.settings.base"
+
+networks:
+  vep:
+
+volumes:
+  vep_data:
+
