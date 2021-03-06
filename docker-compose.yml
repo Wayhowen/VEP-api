@@ -15,7 +15,11 @@ services:
     tty: true
     stdin_open: true
     #    command: sh -c "python"
-    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=api_external.app.settings.base"
+    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py migrate --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py makemigrations app --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py creatersakey --settings=api_external.app.settings.base"
+#    command: sh -c "cd /code && python manage.py test_command --settings=app.settings.base"
 
   api_internal:
     image: api_internal
@@ -32,6 +36,8 @@ services:
     stdin_open: true
     #    command: sh -c "python"
     command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=api_internal.settings.base"
+#    command: sh -c "cd /code && python manage.py migrate --settings=api_internal.settings.base"
+#    command: sh -c "cd /code && python manage.py creatersakey --settings=api_internal.settings.base"
 
 networks:
   vep:
