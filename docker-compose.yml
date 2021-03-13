@@ -1,11 +1,13 @@
 version: "3.1"
 
 services:
-  api_external:
-    image: api_external
+  api-external:
+    image: api-external
     build:
       context: api_external/.
       dockerfile: Dockerfile
+    environment:
+      API_EXT_ENABLED: 'true'
     volumes:
       - ${PWD}/api_external/:/code
     ports:
@@ -15,29 +17,38 @@ services:
     tty: true
     stdin_open: true
     #    command: sh -c "python"
+    depends_on:
+      - rabbit
     command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=app.settings.base"
 #    command: sh -c "cd /code && python manage.py migrate --settings=app.settings.base"
 #    command: sh -c "cd /code && python manage.py makemigrations app --settings=app.settings.base"
 #    command: sh -c "cd /code && python manage.py creatersakey --settings=api_external.app.settings.base"
-#    command: sh -c "cd /code && python manage.py test_command --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py create_api_key --settings=app.settings.base"
 
-  api_internal:
-    image: api_internal
-    build:
-      context: api_internal/.
-      dockerfile: Dockerfile
-    volumes:
-      - ${PWD}/api_internal/:/code
-    ports:
-      - "8001:8000"
+  worker:
+    build: api_internal
+    command: celery -A tasks.celeryapp worker --loglevel=info -Q process_data_q
+    environment:
+      SETTINGS_MODULE: settings.base
     networks:
       - vep
-    tty: true
-    stdin_open: true
-    #    command: sh -c "python"
-    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=api_internal.settings.base"
-#    command: sh -c "cd /code && python manage.py migrate --settings=api_internal.settings.base"
-#    command: sh -c "cd /code && python manage.py creatersakey --settings=api_internal.settings.base"
+    volumes:
+      - ${PWD}/api_internal:/code
+    depends_on:
+      - rabbit
+
+  rabbit:
+      image: rabbitmq:3-management
+      hostname: rabbit1
+      restart: always
+      environment:
+        RABBITMQ_DEFAULT_USER: vep
+        RABBITMQ_DEFAULT_PASS: HCL9aN7EAg46497kKJUnfm6B
+      networks:
+        - vep
+      ports:
+      - '9004:15672'
+      - '9005:5672'
 
 networks:
   vep:

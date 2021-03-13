@@ -25,7 +25,7 @@ SECRET_KEY = 'tps03#!gg0sq$i)^y^%yc61zz$-4+fagd2y(q-#w+a%pe27#ih'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,7 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'oidc_provider',
     'rest_framework',
-    'app'
+    'rest_framework_api_key',
+    'app',
+    'api_ext',
+    'persistence',
+    'tasks',
 ]
 
 MIDDLEWARE = [
@@ -107,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'app.CustomUser'
+AUTH_USER_MODEL = 'persistence.CustomUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -140,3 +144,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 LOGIN_URL = '/accounts/login/'
+
+CELERY_TASK_ROUTES = {
+    'process_data': {'queue': 'process_data_q'},
+}
+
+CELERY_IMPORTS = ('tasks.async_tasks',)
+
+CELERY_BROKER_URL = 'amqp://vep:HCL9aN7EAg46497kKJUnfm6B@rabbit'
