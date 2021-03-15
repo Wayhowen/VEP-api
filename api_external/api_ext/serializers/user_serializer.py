@@ -9,13 +9,13 @@ from persistence.models import CustomUser
 # TODO: https://www.django-rest-framework.org/api-guide/generic-views/
 # TODO: User should belong to one group only, check how to make it work properly
 class UserSerializer(serializers.ModelSerializer):
-    # password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = CustomUser
         fields = ('email', 'phone_number', 'password', 'type')
         extra_kwargs = {
-            'password': {'write_only': True, 'required': False}
+            "type": {"default": "PT"}
         }
 
     def create(self, validated_data):
