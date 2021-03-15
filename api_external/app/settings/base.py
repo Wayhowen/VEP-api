@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'oidc_provider',
     'rest_framework',
     'rest_framework_api_key',
+    'drf_yasg',
     'app',
     'api_ext',
     'persistence',
@@ -121,7 +122,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated'
     ],
 }
-
 
 
 # Internationalization

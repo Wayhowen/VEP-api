@@ -8,6 +8,7 @@ class JobCreateSerializer(serializers.ModelSerializer):
         model = Job
         fields = ('type', 'uid', 'status')
         read_only_fields = ('uid', 'status')
+        ref_name = "Job"
 
     def create(self, validated_data):
         job = Job.objects.create_new(**validated_data)
@@ -24,6 +25,7 @@ class JobGetUpdateSerializer(serializers.ModelSerializer):
             'start_datetime': {'required': False},
             'finish_datetime': {'required': False}
         }
+        ref_name = "Job"
 
     def update(self, instance, validated_data):
         instance.update(validated_data)
