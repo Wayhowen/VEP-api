@@ -31,5 +31,9 @@ urlpatterns = [
     path('users/', views.UserAPIView.as_view(), name='users'),
     path('practitioner/', views.practitioner_view),
     path('job/', views.CreateJobAPIView.as_view(), name='job'),
-    path('job/<str:uid>', views.GetUpdateJobAPIView.as_view(), name='job_details')
+    path('job/<str:uid>', views.GetUpdateJobAPIView.as_view(), name='job_details'),
+    path('raw_recording/', views.raw_recording_data_view, name='raw_recording'),
+    # path('accelerometer/<int:entry_id>', views.GetAccelerometerEntryDataAPIView.as_view(),
+    #      name="accelerometer_entry_data"),
+    path('activity/', views.ActivityAPIView.as_view(), name='activity')
 ]

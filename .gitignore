@@ -139,3 +139,5 @@ cython_debug/
 
 # Own additions
 **/.idea/
+
+/api_external/persistence/data_reader/data/*

@@ -3,6 +3,7 @@ from datetime import date
 from django.db import models
 
 from persistence.enums import Gender
+from persistence.models.custom_user import CustomUser
 
 
 class Patient(models.Model):
@@ -13,6 +14,9 @@ class Patient(models.Model):
     postcode = models.CharField(max_length=7)
     height_cm = models.IntegerField()
     weight_kg = models.FloatField(max_length=5)
+
+    patient_account = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=False,
+                                        related_name="patient")
 
     # TODO: make sure it works
     @property

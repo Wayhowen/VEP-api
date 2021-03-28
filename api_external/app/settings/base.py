@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -152,3 +152,9 @@ CELERY_TASK_ROUTES = {
 CELERY_IMPORTS = ('tasks.async_tasks',)
 
 CELERY_BROKER_URL = 'amqp://vep:HCL9aN7EAg46497kKJUnfm6B@rabbit'
+
+
+RECORDINGS_FOLDER = f"raw_recordings/"
+
+MEDIA_ROOT = "file_storage/"
+MEDIA_URL = "file_storage/"

@@ -9,7 +9,7 @@ services:
     environment:
       API_EXT_ENABLED: 'true'
     volumes:
-      - ${PWD}/api_external/:/code
+      - ./api_external/:/code
     ports:
       - "8000:8000"
     networks:
@@ -21,19 +21,23 @@ services:
       - rabbit
     command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=app.settings.base"
 #    command: sh -c "cd /code && python manage.py migrate --settings=app.settings.base"
-#    command: sh -c "cd /code && python manage.py makemigrations app --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py makemigrations --settings=app.settings.base"
 #    command: sh -c "cd /code && python manage.py creatersakey --settings=api_external.app.settings.base"
 #    command: sh -c "cd /code && python manage.py create_api_key --settings=app.settings.base"
+#    command: sh -c "cd /code && python manage.py read_data --settings=app.settings.base"
 
   worker:
-    build: api_internal
+    build:
+      context: api_internal/.
+      dockerfile: Dockerfile
     command: celery -A tasks.celeryapp worker --loglevel=info -Q process_data_q
+#    command: ls
     environment:
       SETTINGS_MODULE: settings.base
     networks:
       - vep
     volumes:
-      - ${PWD}/api_internal:/code
+      - ./api_internal:/code
     depends_on:
       - rabbit
 
