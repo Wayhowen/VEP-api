@@ -9,11 +9,21 @@ class Handler:
         pass
 
     def process(self, request: Request) -> dict:
-        user_type = request.user.type
+        if hasattr(request.user, "type"):
+            user_type = request.user.type
         dict_query = dict(request.data)
 
-        raw_recording_ids = ActivityResult.objects.filter(patient__patient_account__email=dict_query.get("patient_email", None)).values_list('raw_recording', flat=True)
-        query = RawRecording.objects.filter(id__in=raw_recording_ids)
+        if patient_email := dict_query.get("patient_email", None):
+            raw_recording_ids = ActivityResult.objects.filter(patient__patient_account__email=patient_email).values_list('raw_recording', flat=True)
+        elif patient_id := dict_query.get("patient_id", None):
+            raw_recording_ids = ActivityResult.objects.filter(
+                patient__id=patient_id).values_list('raw_recording', flat=True)
+        elif activity_id := dict_query.get("activity_id", None):
+            raw_recording_ids = ActivityResult.objects.filter(
+                id=activity_id).values_list('raw_recording', flat=True)
+        else:
+            raw_recording_ids = []
+        query = RawRecording.objects.filter(id__in=raw_recording_ids).order_by('-id')
 
         if "activity_name" in dict_query:
             query = query.filter(name=dict_query["activity_name"])

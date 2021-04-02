@@ -198,7 +198,8 @@ class GetUpdateJobAPIView(APIView):
                          tags=["Job"],
                          operation_description="Update job object. Endpoint meant for workers only and should not be used by users.")
     def put(self, request, uid):
-        job = Job.objects.get_and_update(uid, ['last_edited_datetime'])
+        job = Job.objects.get_and_update(uid, ['last_edited_datetime', 'start_datetime', 'finish_datetime'])
+        # job = Job.objects.get_and_update(uid)
         serializer = self.serializer_class(job, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -217,6 +218,13 @@ class GetUpdateJobAPIView(APIView):
                                  type=openapi.TYPE_STRING,
                                  max_length="256",
                                  format="email"),
+                             'patient_id': openapi.Schema(
+                                 title="The ID of the patient for whom to return the data\n"
+                                       "Exchangeable with patient_email",
+                                 type=openapi.TYPE_INTEGER),
+                             'activity_id': openapi.Schema(
+                                 title="The ID of ActivityResult for which to return the data",
+                                 type=openapi.TYPE_INTEGER),
                              'activity_name': openapi.Schema(title="Name of requested activity",
                                                              type=openapi.TYPE_STRING,
                                                              max_length="256",

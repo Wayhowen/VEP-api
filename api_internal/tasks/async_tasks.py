@@ -10,6 +10,6 @@ from tasks.celeryapp import app
           max_retries=5)
 def process_data(job_id, job_type):
     job = Job(job_id, job_type)
-    data_processor = settings.JOB_PROCESSORS[str(job_type)]()
-    data_processor.process(job)
+    job_processor = settings.JOB_PROCESSORS[str(job.type)]()
+    job_processor.process(job)
     print(f'Processed job with uid: {job_id}')
