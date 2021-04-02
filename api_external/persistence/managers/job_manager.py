@@ -4,8 +4,8 @@ from django.utils.timezone import now
 
 
 class JobManager(BaseUserManager):
-    def create_new(self, type):
-        job = self.model(type=type)
+    def create_new(self, type, patient, activity_result=None):
+        job = self.model(type=type, patient_id=patient['id'], activity_result=activity_result)
         job.save(using=self._db)
         return job
 

@@ -4,10 +4,12 @@ from persistence.models.job import Job
 
 
 class JobCreateSerializer(serializers.ModelSerializer):
+    patient_id = serializers.IntegerField(source='patient.id')
+
     class Meta:
         model = Job
-        fields = ('type', 'uid', 'status')
-        read_only_fields = ('uid', 'status')
+        fields = ('type', 'uid', 'status', 'patient_id', 'activity_result')
+        read_only_fields = ('uid', 'status', 'start_datetime', 'finish_datetime', 'error_message')
         ref_name = "Job"
 
     def create(self, validated_data):
@@ -18,8 +20,10 @@ class JobCreateSerializer(serializers.ModelSerializer):
 class JobGetUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
-        fields = ('uid', 'status', 'start_datetime', 'finish_datetime')
-        read_only_fields = ('uid', )
+        fields = ('uid', 'status', 'start_datetime', 'finish_datetime', 'error_message', 'patient_id',
+                  'activity_result_id')
+        read_only_fields = ('uid', 'status', 'start_datetime', 'finish_datetime', 'error_message',
+                            'patient_id', 'activity_result_id')
         extra_kwargs = {
             'status': {'required': False},
             'start_datetime': {'required': False},

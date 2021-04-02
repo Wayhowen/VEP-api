@@ -1,7 +1,4 @@
 from datetime import datetime
-from json import JSONDecodeError
-
-import requests
 
 import settings
 
@@ -13,12 +10,12 @@ class Job:
         self.start_datetime = None
         self.finish_datetime = None
         self.status = 1
+        self.error_message = None
+        self.patient_id = None
+        self.activity_result_id = None
 
-        self.url = f"{settings.API_INT_URL}/api/job/"
-        self.put_url = f"{self.url}{self.uid}"
-
-        self.data = self._get_job_data()
-        self.processed_data = None
+        self.job_url = f"{settings.API_INT_URL}{settings.JOB_ENDPOINT}"
+        self.job_put_url = f"{self.job_url}{self.uid}"
 
     def set_started(self):
         self.start_datetime = datetime.now()
@@ -26,15 +23,11 @@ class Job:
     def set_finished(self):
         self.finish_datetime = datetime.now()
 
-    def _get_job_data(self):
-        response = requests.get(f"{self.url}{self.uid}", headers=settings.API_AUTHORIZATION_HEADER)
-        try:
-            data = response.json()
-            self._remove_unecessary_data(data)
-            return data
-        except JSONDecodeError:
-            print('Data recieved by the engine is not of JSON type', response.text)
-        return data
+    def set_job_details(self, job_details):
+        processed_job_details = self._remove_unecessary_data(job_details)
+        self.patient_id = processed_job_details.get("patient_id", None)
+        self.activity_result_id = processed_job_details.get("activity_result_id", None)
+        return processed_job_details
 
     def _remove_unecessary_data(self, job_data: dict):
         job_data.pop("uid")
@@ -45,8 +38,11 @@ class Job:
         self.status = status
 
     def as_json(self):
-        return {
-            "status": self.status,
-            "start_datetime": self.start_datetime,
-            "finish_datetime": self.finish_datetime
+        job_json = {
+            "status": self.status
         }
+        if self.start_datetime:
+            job_json["start_datetime"] = self.start_datetime.strftime("%m/%d/%Y, %H:%M:%S")
+        if self.finish_datetime:
+            job_json["finish_datetime"] = self.finish_datetime.strftime("%m/%d/%Y, %H:%M:%S")
+        return job_json

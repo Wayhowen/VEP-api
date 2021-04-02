@@ -1,0 +1,1 @@
+Folder to keep temporary activities data

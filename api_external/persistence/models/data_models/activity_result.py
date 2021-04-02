@@ -8,3 +8,4 @@ class ActivityResult(models.Model):
     feedback = models.TextField()
     raw_recording = models.ForeignKey(null=False, to=RawRecording, on_delete=models.PROTECT)
     patient = models.ForeignKey(null=False, to=Patient, on_delete=models.PROTECT)
+    processing_result = models.JSONField(null=True)

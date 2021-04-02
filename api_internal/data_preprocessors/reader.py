@@ -1,15 +1,13 @@
 import csv
 import os
 from datetime import datetime
-from os import listdir
-from os.path import isfile, join
 
-from persistence.models import Activity, AccelerometerEntry, AccelerometerData, Patient
+import settings
 
 
 class Reader:
     def __init__(self):
-        self.data_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "sit_stand1")
+        self.data_folder = settings.DATA_FOLDER
         self.reader = csv.reader
         self.file_ending = ".csv"
         self.metadata_file_name = f"metadata{self.file_ending}"
