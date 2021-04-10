@@ -28,12 +28,12 @@ urlpatterns = [
     path('ping/', views.ping),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('users/', views.UserAPIView.as_view(), name='users'),
+    path('users/', views.UserCreateAPIView.as_view(), name='users'),
+    path('users/<int:user_id>', views.UserUpdateAPIView.as_view(), name='users_details'),
     path('practitioner/', views.practitioner_view),
     path('job/', views.CreateJobAPIView.as_view(), name='job'),
     path('job/<str:uid>', views.GetUpdateJobAPIView.as_view(), name='job_details'),
     path('raw_recording/', views.raw_recording_data_view, name='raw_recording'),
-    # path('accelerometer/<int:entry_id>', views.GetAccelerometerEntryDataAPIView.as_view(),
-    #      name="accelerometer_entry_data"),
-    path('activity/', views.ActivityAPIView.as_view(), name='activity')
+    path('activity/', views.ActivityAPIView.as_view(), name='activity'),
+    path('patients/<int:patient_id>', views.PatientAPIView.as_view(), name='patients')
 ]

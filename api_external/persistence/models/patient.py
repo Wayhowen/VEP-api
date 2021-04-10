@@ -7,16 +7,20 @@ from persistence.models.custom_user import CustomUser
 
 
 class Patient(models.Model):
-    first_name = models.CharField(max_length=11)
-    last_name = models.CharField(max_length=17)
-    gender = models.CharField(max_length=1, choices=Gender.choices())
-    date_of_birth = models.DateField()
-    postcode = models.CharField(max_length=7)
-    height_cm = models.IntegerField()
-    weight_kg = models.FloatField(max_length=5)
+    first_name = models.CharField(max_length=11, null=True)
+    last_name = models.CharField(max_length=17, null=True)
+    gender = models.CharField(max_length=1, choices=Gender.choices(), null=True)
+    date_of_birth = models.DateField(null=True)
+    postcode = models.CharField(max_length=7, null=True)
+    height_cm = models.IntegerField(null=True)
+    weight_kg = models.FloatField(max_length=5, null=True)
 
     patient_account = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=False,
                                         related_name="patient")
+    assigned_practitioner = models.ForeignKey(CustomUser, on_delete=models.PROTECT, null=True,
+                                              related_name="assigned_patients")
+
+    family_members = models.ManyToManyField(CustomUser, related_name="relatives")
 
     # TODO: make sure it works
     @property

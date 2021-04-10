@@ -26,20 +26,29 @@ class PractitionerPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         return is_in_group(request.user, UserType.PRACTITIONER.name)
 
+    def has_object_permission(self, request, view, obj):
+        return obj.assigned_practitioner.id == request.user.id
+
 
 class FamilyPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         return is_in_group(request.user, UserType.FAMILY_MEMBER.name)
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.id in obj.family_members
 
 
 class PatientPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         return is_in_group(request.user, UserType.PATIENT.name)
 
+    def has_object_permission(self, request, view, obj):
+        return obj.patient_account.id == request.user.id
+
 
 class AdminPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         return is_in_group(request.user, UserType.SYSTEM_ADMINISTRATOR.name)
 
-
-
+    def has_object_permission(self, request, view, obj):
+        return True

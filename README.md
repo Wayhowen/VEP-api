@@ -17,4 +17,10 @@ Django API for VEP
 3.) Start Django server using:  
     `python manage.py runserver 0.0.0.0:8000 --settings=api_internal.settings.base`
 
-Important notice: this is only a development, 1 thread server and therefore should not be used in productiony
+Important notice: this is only a development, 1 thread server and therefore should not be used in production
+
+TODO: 
+- Object Level Permissions
+- Testing
+- Fuzzy Logic
+- Visualization Endpoint
