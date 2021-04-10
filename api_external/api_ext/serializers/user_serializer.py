@@ -1,42 +1,115 @@
 from django.contrib.auth.models import Group
 from django.core import exceptions
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from persistence.enums import UserType
-from persistence.models import CustomUser
+from persistence.models import CustomUser, Patient
 
 
 # TODO: https://www.django-rest-framework.org/api-guide/generic-views/
 # TODO: User should belong to one group only, check how to make it work properly
-class UserSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    patient_id = serializers.SerializerMethodField(read_only=True)
+    assigned_practitioner_id = serializers.IntegerField(required=False)
+    assigned_practitioner = serializers.SerializerMethodField(read_only=True)
+    user_type = serializers.ModelField(model_field=CustomUser()._meta.get_field('type'))
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'phone_number', 'password', 'type')
+        fields = ('email', 'phone_number', 'password', 'user_type', 'relatives', 'patient_id',
+                  'assigned_practitioner_id', 'assigned_practitioner', 'assigned_patients')
         extra_kwargs = {
-            "type": {"default": "PT"}
+            "user_type": {"default": "PT"},
+            "assigned_patients": {"required": False, "many": True},
+            "relatives": {"required": False}
         }
 
     def create(self, validated_data):
         user = CustomUser.objects.create_user(**validated_data)
         try:
-            group = Group.objects.get(name=UserType.get_name(validated_data['type']))
+            group = Group.objects.get(name=UserType.get_name(validated_data['user_type']))
         except exceptions.ObjectDoesNotExist:
             group = Group.objects.get(name="PATIENT")
+
         user.groups.add(group)
+
+        self._create_patient_if_pt(user, validated_data.get("assigned_practitioner"))
         return user
 
-    def update(self, instance, validated_data):
-        user_type = validated_data.get('type', None)
-        if user_type:
-            instance.groups.clear()
-            try:
-                group = Group.objects.get(name=UserType.get_name(user_type))
-            except Exception as e:
-                raise serializers.ValidationError(
-                    {"Missing Group": f"There is no group called '{user_type}'"})
+    def _create_patient_if_pt(self, user, assigned_practitioner_id):
+        if user.type == "PT":
+            if assigned_practitioner_id:
+                assigned_practitioner = get_object_or_404(Patient, pk=assigned_practitioner_id)
+                if assigned_practitioner.patient_account.type == "PR":
+                    patient = Patient.objects.create(patient_account=user,
+                                                     assigned_practitioner_id=assigned_practitioner_id)
+                else:
+                    raise serializers.ValidationError({"Error": "Selected practitioner is not a practitioner"})
+            else:
+                raise serializers.ValidationError({"Error": "No Practitioner assigned for this user"})
+            return patient
 
-            instance.groups.add(group)
+    def get_patient_id(self, instance):
+        if instance.type == "PT":
+            return instance.patient.get().id
+        return None
+
+    def get_assigned_practitioner(self, instance):
+        if instance.type == "PT":
+            return instance.patient.get().assigned_practitioner.id
+        return None
+
+# TODO: could be updated so that users are not left without practitioners etc.
+class UserUpdateDeleteSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+    patient_id = serializers.SerializerMethodField(read_only=True)
+    assigned_practitioner_id = serializers.IntegerField(required=False)
+    assigned_practitioner = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'phone_number', 'password', 'relatives', 'patient_id',
+                  'assigned_practitioner_id', 'assigned_practitioner', 'assigned_patients')
+        extra_kwargs = {
+            "user_type": {"default": "PT"},
+            "assigned_patients": {"required": False, "many": True},
+            "relatives": {"required": False},
+            "phone_number": {"required": False},
+            "email": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        if relatives := validated_data.pop('relatives', None):
+            if instance.type == "PT" or instance.type == "FM":
+                instance.relatives.clear()
+                for relative in relatives:
+                    if instance.type == "PT" and relative.patient_account.type == "FM" or \
+                            instance.type == "FM" and relative.patient_account.type == "PT":
+                        instance.relatives.add(relative)
+            else:
+                raise serializers.ValidationError(
+                    {"Error": "Adding relatives only possible for 'PT' or 'FM'"})
+        if assigned_patients := validated_data.pop('assigned_patients', None):
+            if instance.type == "PR":
+                instance.assigned_patients.clear()
+                for patient in assigned_patients:
+                    if patient.patient_account.type == "PT":
+                        instance.assigned_patients.add(patient)
+            else:
+                raise serializers.ValidationError(
+                    {"Error": "Adding patients only possible for 'PR'"})
+
         instance.update(validated_data)
         return instance
+
+    def get_patient_id(self, instance):
+        if instance.type == "PT":
+            return instance.patient.get().id
+        return None
+
+    def get_assigned_practitioner(self, instance):
+        if instance.type == "PT":
+            return instance.patient.get().assigned_practitioner.id
+        return None

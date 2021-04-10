@@ -10,7 +10,7 @@ def create_default_patient(apps, schema_editor):
     user = CustomUser.objects.create_user(email="default@default.com",
                                           phone_number=12345678910,
                                           password="password",
-                                          type="PT")
+                                          user_type="PT")
     user.save()
     patient = Patient.objects.create(first_name="John", last_name="Smith", date_of_birth="1998-03-03",
                                      height_cm=188, weight_kg=98, patient_account=user)

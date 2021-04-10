@@ -1,29 +1,28 @@
 import json
-import os
 
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
-from rest_framework.parsers import FileUploadParser, MultiPartParser, JSONParser
+from rest_framework.generics import get_object_or_404
+from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 
-from api_ext.serializers import UserSerializer
+from api_ext.serializers import UserCreateSerializer
 from api_ext.serializers.job_serializer import JobCreateSerializer, JobGetUpdateSerializer
-from persistence.models import CustomUser, Job
+from persistence.models import CustomUser, Job, Patient
 from persistence.permissions import PractitionerPermissions, FamilyPermissions, PatientPermissions, \
     AdminPermissions
 from tasks.celeryapp import app as celery_app
 from .activity_handler import Handler as ActivityHandler
-# from .serializers.accelerometer_entry_serializer import AccelerometerEntrySerializer
 from .custom_parser import MultipartJsonParser
 from .serializers.activity_result_serializer import ActivityResultSerializer
-from .serializers.raw_recording_serializer import RawRecordingSerializer
+from .serializers.patient_serializer import PatientSerializer
+from .serializers.user_serializer import UserUpdateDeleteSerializer
 
 
 def ping(request):
@@ -85,7 +84,7 @@ def logout_view(request):
 
 @authentication_classes([])
 @permission_classes([])
-class UserAPIView(APIView):
+class UserCreateAPIView(APIView):
     """
     Endpoint for managing user auth objects.
 
@@ -95,12 +94,12 @@ class UserAPIView(APIView):
     put:
     Editing users
     """
-    serializer_class = UserSerializer
+    serializer_class = UserCreateSerializer
 
     # TODO: docs response says it returns password but it doesn't - see:
     # https://github.com/axnsan12/drf-yasg/issues/70
-    @swagger_auto_schema(request_body=UserSerializer(many=False),
-                         responses={200: UserSerializer(many=False)},
+    @swagger_auto_schema(request_body=UserCreateSerializer(many=False),
+                         responses={200: UserCreateSerializer(many=False)},
                          tags=["Users"], )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -110,21 +109,28 @@ class UserAPIView(APIView):
             return Response(serializer.errors)
         return Response(serializer.data)
 
-    @swagger_auto_schema(request_body=UserSerializer(many=False),
-                         responses={200: UserSerializer(many=False)},
+
+@permission_classes([AdminPermissions | PractitionerPermissions])
+class UserUpdateAPIView(APIView):
+    serializer_class = UserUpdateDeleteSerializer
+
+    @swagger_auto_schema(request_body=UserUpdateDeleteSerializer(many=False),
+                         responses={200: UserUpdateDeleteSerializer(many=False)},
                          tags=["Users"], )
-    def put(self, request):
-        try:
-            user = CustomUser.objects.get(email=request.data['email'])
-        except ObjectDoesNotExist:
-            return Response(status=404,
-                            data={"error": f"User with email='{request.data['email']}' not found."})
+    def put(self, request, user_id):
+        user = get_object_or_404(CustomUser, pk=user_id)
         serializer = self.serializer_class(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
         else:
             return Response(serializer.errors)
         return Response(serializer.data)
+
+    # TODO: Might add reassigning relatives, patients, etc
+    def delete(self, request, user_id):
+        user = get_object_or_404(CustomUser, pk=user_id)
+        user.delete()
+        return Response(status=200)
 
 
 @api_view(['GET'])
@@ -136,12 +142,6 @@ def practitioner_view(request):
 @permission_classes((FamilyPermissions,))
 @api_view(['GET'])
 def family_view(request):
-    return HttpResponse()
-
-
-@permission_classes((PatientPermissions,))
-@api_view(['GET'])
-def patient_view(request):
     return HttpResponse()
 
 
@@ -276,4 +276,16 @@ class ActivityAPIView(APIView):
             serializer.save()
         else:
             return Response(data=serializer.errors)
+        return Response(serializer.data)
+
+
+@permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions
+                     | PatientPermissions | FamilyPermissions | AdminPermissions])
+class PatientAPIView(APIView):
+    serializer_class = PatientSerializer
+
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Patient, pk=patient_id)
+        self.check_object_permissions(request, patient)
+        serializer = self.serializer_class(patient)
         return Response(serializer.data)
