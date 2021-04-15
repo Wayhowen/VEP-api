@@ -31,3 +31,5 @@ packaging==20.9
 pyparsing==2.4.7
 ruamel.yaml==0.16.13
 ruamel.yaml.clib==0.2.2
+
+Pillow==8.1.2

@@ -4,6 +4,22 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
+from persistence.models import Patient, CustomUser
+
+
+def create_default_patient(apps, schema_editor):
+    user = CustomUser.objects.create_user(email="default@default.com",
+                                          phone_number=12345678910,
+                                          password="password",
+                                          user_type="PT",
+                                          family_members=None,
+                                          assigned_patients=None,
+                                          assigned_practitioner_id=None)
+    user.save()
+    patient = Patient.objects.create(first_name="John", last_name="Smith", date_of_birth="1998-03-03",
+                                     height_cm=188, weight_kg=98, patient_account=user)
+    patient.save()
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -15,13 +31,14 @@ class Migration(migrations.Migration):
             model_name='patient',
             name='assigned_practitioner',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,
-                                    related_name='assigned_patients', to='persistence.customuser'),
+                                    related_name='assigned_patients', to='persistence.customuser',
+                                    null=True),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='patient',
+            model_name='customuser',
             name='family_members',
-            field=models.ManyToManyField(null=True, related_name='relatives',
-                                         to=settings.AUTH_USER_MODEL),
+            field=models.ManyToManyField(related_name='relatives', to=settings.AUTH_USER_MODEL),
         ),
+        migrations.RunPython(create_default_patient),
     ]

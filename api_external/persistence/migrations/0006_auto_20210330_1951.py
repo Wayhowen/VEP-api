@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='job',
             name='activity_result',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT,
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE,
                                     to='persistence.activityresult'),
         ),
         migrations.AlterField(

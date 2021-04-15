@@ -121,6 +121,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated'
     ],
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
 
 
@@ -152,7 +153,6 @@ CELERY_TASK_ROUTES = {
 CELERY_IMPORTS = ('tasks.async_tasks',)
 
 CELERY_BROKER_URL = 'amqp://vep:HCL9aN7EAg46497kKJUnfm6B@rabbit'
-
 
 RECORDINGS_FOLDER = f"raw_recordings/"
 

@@ -3,19 +3,6 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
-from persistence.models import CustomUser, Patient
-
-
-def create_default_patient(apps, schema_editor):
-    user = CustomUser.objects.create_user(email="default@default.com",
-                                          phone_number=12345678910,
-                                          password="password",
-                                          user_type="PT")
-    user.save()
-    patient = Patient.objects.create(first_name="John", last_name="Smith", date_of_birth="1998-03-03",
-                                     height_cm=188, weight_kg=98, patient_account=user)
-    patient.save()
-
 
 class Migration(migrations.Migration):
 
@@ -49,5 +36,4 @@ class Migration(migrations.Migration):
                 ('raw_recording', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='persistence.rawrecording')),
             ],
         ),
-        migrations.RunPython(create_default_patient),
     ]

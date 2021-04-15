@@ -21,6 +21,9 @@ Important notice: this is only a development, 1 thread server and therefore shou
 
 TODO: 
 - Object Level Permissions
+    DONE
 - Testing
+    TO SOME DEGREE DONE
 - Fuzzy Logic
 - Visualization Endpoint
+    TO SOME DEGREE DONE

@@ -141,3 +141,7 @@ cython_debug/
 **/.idea/
 
 /api_external/persistence/data_reader/data/*
+
+/api_external/static/*
+/api_external/file_storage/*
+/api_internal/temp/*
