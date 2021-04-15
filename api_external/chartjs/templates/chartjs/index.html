@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>chatsjs</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+</head>
+
+<body class="container-fluid">
+<center class="row">
+    <h1>Sample Interface for <b>VEP</b> data processing using <b>django</b></h1>
+</center>
+<hr/>
+<div class="row">
+    <div class="col-md-6" style="width:80%; margin:0 auto;">
+        <canvas id="patientChartLine"></canvas>
+        <select name="chartType" id="chartType" onchange="updateChartType()">
+            <option value="bar">Bar</option>
+            <option value="line">Line</option>
+            <option value="pie">Pie</option>
+            <option value="radar">Radar</option>
+            <option value="polarArea">Polar Area</option>
+            <option value="bar"></option>
+        </select>
+    </div>
+</div>
+<div id="check">val</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+<script>
+    var patientId = getPatientId()
+    var endpoint = '/graphs/chart_data/' + patientId;
+    var savedData = {}
+    var lastLabels = []
+    var lastDatasets = []
+    var myChart;
+
+    $.ajax({
+        method: "GET",
+        url: endpoint,
+        success: function (data) {
+            savedData = data;
+            drawLineGraph(data, 'patientChartLine', 'line');
+        },
+        error: function (error_data) {
+            console.log(error_data);
+        }
+    })
+
+
+    function drawLineGraph(data, id, type) {
+        lastLabels = data.labels;
+        lastDatasets = data.datasets;
+        var ctx = document.getElementById(id).getContext('2d');
+        myChart = new Chart(ctx, {
+            // The type of chart we want to create
+            type: type,
+
+            // The data for our dataset
+            data: {
+                labels: data.labels,
+                datasets: data.datasets
+            },
+            // Configuration options go here
+            options: {
+                scales: {
+                    xAxes: [{
+                        display: true
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+
+    function updateChart(chart, label, data) {
+        chart.data.labels.push(label);
+        chart.data.datasets.forEach((dataset, index) => {
+            let dataList = data.datasets[index].data;
+            let newData = dataList.slice(lastDatasets[index].data.length)
+            console.log(dataList.length)
+            console.log(lastDatasets[index].data.length)
+            dataset.data.push(newData);
+        });
+        chart.update();
+
+        lastLabels = data.labels;
+        lastDatasets = data.datasets;
+    }
+
+
+    function getPatientId() {
+        var url = window.location.href;
+        var splitted = url.split("/");
+        return splitted[splitted.length - 1];
+    }
+
+    setInterval(function () {
+        $.ajax({
+            url: endpoint,
+            success: function (data) {
+                let labels = data.labels.slice(lastLabels.length);
+                updateChart(myChart, labels, data)
+            }
+        });
+    }, 1000);
+
+</script>
+</body>
+
+</html>

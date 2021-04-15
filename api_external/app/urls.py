@@ -11,5 +11,7 @@ urlpatterns = [
 
 if os.environ.get('API_EXT_ENABLED') == 'true':
     urlpatterns.append(path('api/', include('api_ext.urls')))
+if os.environ.get('CHARTS_ENABLED') == 'true':
+    urlpatterns.append(path('graphs/', include('chartjs.urls')))
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
