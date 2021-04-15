@@ -18,12 +18,15 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'phone_number', 'password', 'user_type', 'relatives', 'patient_id',
-                  'assigned_practitioner_id', 'assigned_practitioner', 'assigned_patients')
+        fields = ('id', 'email', 'phone_number', 'password', 'user_type', 'family_members',
+                  'patient_id', 'assigned_practitioner_id', 'assigned_practitioner',
+                  'assigned_patients')
         extra_kwargs = {
+            'id': {'read_only': True},
             "user_type": {"default": "PT"},
             "assigned_patients": {"required": False, "many": True},
-            "relatives": {"required": False}
+            "family_members": {"required": False},
+            "patient": {"read_only": True}
         }
 
     def create(self, validated_data):
@@ -35,14 +38,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         user.groups.add(group)
 
-        self._create_patient_if_pt(user, validated_data.get("assigned_practitioner"))
+
+        self._create_patient_if_pt(user, validated_data.get("assigned_practitioner_id"))
+        self._assign_practitioner_to_patients_if_pr_or_pt(user,
+                                                          validated_data.get("assigned_practitioner_id"))
         return user
 
     def _create_patient_if_pt(self, user, assigned_practitioner_id):
         if user.type == "PT":
             if assigned_practitioner_id:
-                assigned_practitioner = get_object_or_404(Patient, pk=assigned_practitioner_id)
-                if assigned_practitioner.patient_account.type == "PR":
+                assigned_practitioner = get_object_or_404(CustomUser, id=assigned_practitioner_id)
+                if assigned_practitioner.type == "PR":
                     patient = Patient.objects.create(patient_account=user,
                                                      assigned_practitioner_id=assigned_practitioner_id)
                 else:
@@ -50,6 +56,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
             else:
                 raise serializers.ValidationError({"Error": "No Practitioner assigned for this user"})
             return patient
+
+    def _assign_practitioner_to_patients_if_pr_or_pt(self, user, assigned_practitioner_id):
+        if user.type == "PR":
+            for patient in user.assigned_patients.all():
+                patient.assigned_practitioner = user
+        elif user.type == "PT":
+            user.patient.assigned_practitioner = assigned_practitioner_id
+        return user
 
     def get_patient_id(self, instance):
         if instance.type == "PT":
@@ -61,6 +75,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             return instance.patient.get().assigned_practitioner.id
         return None
 
+
 # TODO: could be updated so that users are not left without practitioners etc.
 class UserUpdateDeleteSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
@@ -70,18 +85,19 @@ class UserUpdateDeleteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'phone_number', 'password', 'relatives', 'patient_id',
+        fields = ('id', 'email', 'phone_number', 'password', 'family_members', 'patient_id',
                   'assigned_practitioner_id', 'assigned_practitioner', 'assigned_patients')
         extra_kwargs = {
+            'id': {'read_only': True},
             "user_type": {"default": "PT"},
             "assigned_patients": {"required": False, "many": True},
-            "relatives": {"required": False},
+            "family_members": {"required": False},
             "phone_number": {"required": False},
             "email": {"required": False},
         }
 
     def update(self, instance, validated_data):
-        if relatives := validated_data.pop('relatives', None):
+        if relatives := validated_data.pop('family_members', None):
             if instance.type == "PT" or instance.type == "FM":
                 instance.relatives.clear()
                 for relative in relatives:

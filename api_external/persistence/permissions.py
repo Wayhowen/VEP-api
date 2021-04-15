@@ -13,6 +13,7 @@ def is_in_group(user, group_name):
     except Group.DoesNotExist:
         return None
 
+
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -27,15 +28,19 @@ class PractitionerPermissions(permissions.BasePermission):
         return is_in_group(request.user, UserType.PRACTITIONER.name)
 
     def has_object_permission(self, request, view, obj):
-        return obj.assigned_practitioner.id == request.user.id
+        return self.has_permission(request, view) and \
+               obj.assigned_practitioner and obj.assigned_practitioner.id == request.user.id
 
 
+# TODO: only works for patients now
 class FamilyPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         return is_in_group(request.user, UserType.FAMILY_MEMBER.name)
 
     def has_object_permission(self, request, view, obj):
-        return request.user.id in obj.family_members
+        return self.has_permission(request, view) and \
+               (request.user in obj.patient_account.family_members.all()
+                    or request.user in obj.patient_account.relatives.all())
 
 
 class PatientPermissions(permissions.BasePermission):
@@ -43,7 +48,7 @@ class PatientPermissions(permissions.BasePermission):
         return is_in_group(request.user, UserType.PATIENT.name)
 
     def has_object_permission(self, request, view, obj):
-        return obj.patient_account.id == request.user.id
+        return self.has_permission(request, view) and obj.patient_account.id == request.user.id
 
 
 class AdminPermissions(permissions.BasePermission):
@@ -51,4 +56,4 @@ class AdminPermissions(permissions.BasePermission):
         return is_in_group(request.user, UserType.SYSTEM_ADMINISTRATOR.name)
 
     def has_object_permission(self, request, view, obj):
-        return True
+        return self.has_permission(request, view)

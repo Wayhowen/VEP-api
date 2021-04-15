@@ -1,7 +1,6 @@
 import json
 
 from django.contrib.auth import authenticate, login, logout
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -12,17 +11,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 
-from api_ext.serializers import UserCreateSerializer
 from api_ext.serializers.job_serializer import JobCreateSerializer, JobGetUpdateSerializer
-from persistence.models import CustomUser, Job, Patient
+from persistence.models import CustomUser, Job, Patient, ActivityResult
 from persistence.permissions import PractitionerPermissions, FamilyPermissions, PatientPermissions, \
     AdminPermissions
 from tasks.celeryapp import app as celery_app
 from .activity_handler import Handler as ActivityHandler
 from .custom_parser import MultipartJsonParser
-from .serializers.activity_result_serializer import ActivityResultSerializer
+from .serializers.activity_result_serializer import ActivityCreateResultSerializer, \
+    ActivityGetUpdateDeleteSerializer
 from .serializers.patient_serializer import PatientSerializer
-from .serializers.user_serializer import UserUpdateDeleteSerializer
+from .serializers.user_serializer import UserUpdateDeleteSerializer, UserCreateSerializer
 
 
 def ping(request):
@@ -105,9 +104,8 @@ class UserCreateAPIView(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-        else:
-            return Response(serializer.errors)
-        return Response(serializer.data)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors)
 
 
 @permission_classes([AdminPermissions | PractitionerPermissions])
@@ -131,24 +129,6 @@ class UserUpdateAPIView(APIView):
         user = get_object_or_404(CustomUser, pk=user_id)
         user.delete()
         return Response(status=200)
-
-
-@api_view(['GET'])
-@permission_classes((PractitionerPermissions,))
-def practitioner_view(request):
-    return HttpResponse()
-
-
-@permission_classes((FamilyPermissions,))
-@api_view(['GET'])
-def family_view(request):
-    return HttpResponse()
-
-
-@permission_classes((AdminPermissions,))
-@api_view(['GET'])
-def admin_view(request):
-    return HttpResponse()
 
 
 @permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions])
@@ -187,7 +167,7 @@ class GetUpdateJobAPIView(APIView):
                                     404: openapi.Response("Object does not exist")},
                          tags=["Job"], operation_description="Get details about a job object.")
     def get(self, request, uid):
-        job = Job.objects.get_and_update(uid, ['last_edited_datetime'])
+        job = get_object_or_404(Job, uid=uid)
         serializer = self.serializer_class(job)
         return Response(serializer.data)
 
@@ -198,14 +178,12 @@ class GetUpdateJobAPIView(APIView):
                          tags=["Job"],
                          operation_description="Update job object. Endpoint meant for workers only and should not be used by users.")
     def put(self, request, uid):
-        job = Job.objects.get_and_update(uid, ['last_edited_datetime', 'start_datetime', 'finish_datetime'])
-        # job = Job.objects.get_and_update(uid)
-        serializer = self.serializer_class(job, data=request.data)
+        job = get_object_or_404(Job, uid=uid)
+        serializer = self.serializer_class(job, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-        else:
-            return Response(serializer.errors)
-        return Response(serializer.data)
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 @swagger_auto_schema(method='post',
@@ -256,27 +234,61 @@ def raw_recording_data_view(request):
 
 
 @permission_classes([])
-class ActivityAPIView(APIView):
+class ActivityCreateAPIView(APIView):
     parser_classes = (MultipartJsonParser, JSONParser)
-    serializer_class = ActivityResultSerializer
+    serializer_class = ActivityCreateResultSerializer
 
-    @swagger_auto_schema(request_body=ActivityResultSerializer(many=False),
-                         responses={200: ActivityResultSerializer(many=False),
+    @swagger_auto_schema(request_body=ActivityCreateResultSerializer(many=False),
+                         responses={200: ActivityCreateResultSerializer(many=False),
                                     403: openapi.Response(
                                         "User not logged in or does not have correct permissions")},
                          tags=["Data Management"],
                          operation_description="Endpoint for inserting activity data.\n"
                                                "In the body, there should be another parameter with key 'file' and a value of a zipped raw activity data.\n"
                                                "This endpoint should be requested with multipart/form request type.")
-    def put(self, request, format=None):
+    def post(self, request, format=None):
         file_obj = request.FILES['file']
+
         request.data['raw_recording']['file'] = file_obj
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-        else:
-            return Response(data=serializer.errors)
+            return Response(serializer.data, status=201)
+        return Response(data=serializer.errors)
+
+
+@permission_classes([])
+class ActivityGetUpdateDeleteAPIView(APIView):
+    serializer_class = ActivityGetUpdateDeleteSerializer
+
+    @swagger_auto_schema(request_body=ActivityCreateResultSerializer(many=False),
+                         responses={200: ActivityCreateResultSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Data Management"],
+                         operation_description="Endpoint for inserting activity data.\n"
+                                               "In the body, there should be another parameter "
+                                               "with key 'file' and a value of a zipped raw "
+                                               "activity data.\n "
+                                               "This endpoint should be requested with "
+                                               "multipart/form request type.")
+    def get(self, request, activity_id):
+        activity_result = get_object_or_404(ActivityResult, id=activity_id)
+        serializer = self.serializer_class(activity_result)
         return Response(serializer.data)
+
+    def put(self, request, activity_id):
+        activity_result = get_object_or_404(ActivityResult, id=activity_id)
+        serializer = self.serializer_class(activity_result, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+    def delete(self, request, activity_id):
+        activity_result = get_object_or_404(ActivityResult, id=activity_id)
+        activity_result.delete()
+        return Response(status=200)
 
 
 @permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions

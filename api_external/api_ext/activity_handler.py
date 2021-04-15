@@ -42,7 +42,7 @@ class Handler:
                 "id": activity.id,
                 "start_timestamp": activity.start_time,
                 "finish_timestamp": activity.finish_time,
-                "file_url": activity.file.url
+                "file_url": activity.file.creation_url
             }
             response_dicts_list.append(activity_dict)
         return response_dicts_list

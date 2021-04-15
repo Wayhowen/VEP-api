@@ -31,14 +31,15 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False,
                                         verbose_name='ID')),
-                ('first_name', models.CharField(max_length=11)),
-                ('last_name', models.CharField(max_length=17)),
+                ('first_name', models.CharField(max_length=11, null=True)),
+                ('last_name', models.CharField(max_length=17, null=True)),
                 (
-                'gender', models.CharField(choices=[('M', 'MALE'), ('F', 'FEMALE')], max_length=1)),
-                ('date_of_birth', models.DateField()),
-                ('postcode', models.CharField(max_length=7)),
-                ('height_cm', models.IntegerField()),
-                ('weight_kg', models.FloatField(max_length=5)),
+                'gender', models.CharField(choices=[('M', 'MALE'), ('F', 'FEMALE')], max_length=1,
+                                           null=True)),
+                ('date_of_birth', models.DateField(null=True)),
+                ('postcode', models.CharField(max_length=7, null=True)),
+                ('height_cm', models.IntegerField(null=True)),
+                ('weight_kg', models.FloatField(max_length=5, null=True)),
             ],
         ),
         migrations.CreateModel(

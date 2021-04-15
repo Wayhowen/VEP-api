@@ -16,6 +16,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     type = models.CharField(max_length=20, choices=UserType.choices(), default="PT")
+    family_members = models.ManyToManyField("CustomUser", related_name="relatives")
 
 
 

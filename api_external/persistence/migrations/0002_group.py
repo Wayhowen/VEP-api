@@ -13,6 +13,7 @@ def create_groups(apps, schema_editor):
     admin.save()
 
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

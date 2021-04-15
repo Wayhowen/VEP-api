@@ -7,4 +7,4 @@ class RawRecordingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RawRecording
-        fields = ('name', 'start_time', 'finish_time', 'file')
+        fields = ('id', 'name', 'start_time', 'finish_time', 'file')

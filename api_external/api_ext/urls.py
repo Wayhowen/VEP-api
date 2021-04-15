@@ -30,10 +30,11 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('users/', views.UserCreateAPIView.as_view(), name='users'),
     path('users/<int:user_id>', views.UserUpdateAPIView.as_view(), name='users_details'),
-    path('practitioner/', views.practitioner_view),
     path('job/', views.CreateJobAPIView.as_view(), name='job'),
     path('job/<str:uid>', views.GetUpdateJobAPIView.as_view(), name='job_details'),
     path('raw_recording/', views.raw_recording_data_view, name='raw_recording'),
-    path('activity/', views.ActivityAPIView.as_view(), name='activity'),
+    path('activity/', views.ActivityCreateAPIView.as_view(), name='activity'),
+    path('activity/<int:activity_id>', views.ActivityGetUpdateDeleteAPIView.as_view(),
+         name='activity'),
     path('patients/<int:patient_id>', views.PatientAPIView.as_view(), name='patients')
 ]

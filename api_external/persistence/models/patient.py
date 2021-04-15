@@ -20,8 +20,6 @@ class Patient(models.Model):
     assigned_practitioner = models.ForeignKey(CustomUser, on_delete=models.PROTECT, null=True,
                                               related_name="assigned_patients")
 
-    family_members = models.ManyToManyField(CustomUser, related_name="relatives")
-
     # TODO: make sure it works
     @property
     def age(self):

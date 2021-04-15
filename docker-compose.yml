@@ -54,6 +54,24 @@ services:
       - '9004:15672'
       - '9005:5672'
 
+  run_external_unit_tests:
+    image: api-external
+    build:
+      context: api_external/.
+      dockerfile: Dockerfile
+    environment:
+      API_EXT_ENABLED: 'true'
+    volumes:
+      - ./api_external/:/code
+    ports:
+      - "8000:8000"
+    networks:
+      - vep
+    tty: true
+    stdin_open: true
+    command: sh -c "cd /code && python manage.py test --settings=app.settings.test"
+
+
 networks:
   vep:
 
