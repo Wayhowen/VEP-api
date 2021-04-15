@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'api_ext',
     'persistence',
     'tasks',
+    'chartjs',
 ]
 
 MIDDLEWARE = [
@@ -158,3 +159,5 @@ RECORDINGS_FOLDER = f"raw_recordings/"
 
 MEDIA_ROOT = "file_storage/"
 MEDIA_URL = "file_storage/"
+
+STATIC_ROOT = "static/"
