@@ -6,6 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from api_ext.tests.utils import login
 from persistence.models import CustomUser, Patient
 
 activity_url = reverse("activity")
@@ -43,7 +44,7 @@ class ActivityViewTestCase(APITestCase):
         data = {"file": tmp_file,
                 "raw_recording": json.dumps({"test": "test"})}
         response = self.client.post(activity_url, data, format="multipart")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_uploading_files_works(self):
         """
@@ -60,6 +61,7 @@ class ActivityViewTestCase(APITestCase):
                     "finish_time": 15,
                 },
                 )}
+        login("default@default.com", "password", self.client)
         response = self.client.post(activity_url, data, format="multipart")
         to_remove.append(response.data["id"])
 
@@ -87,6 +89,7 @@ class ActivityViewTestCase(APITestCase):
                 "raw_recording": json.dumps({
                     "name": "test",
                 })}
+        login("default@default.com", "password", self.client)
         response = self.client.post(activity_url, data, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -122,6 +125,7 @@ class ActivityViewTestCase(APITestCase):
                     "finish_time": 15,
                 },
                 )}
+        login("default@default.com", "password", self.client)
         response = self.client.post(activity_url, data, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         to_remove.append(response.data["id"])
@@ -164,6 +168,7 @@ class ActivityViewTestCase(APITestCase):
                     "finish_time": 15,
                 },
                 )}
+        login("default@default.com", "password", self.client)
         response = self.client.post(activity_url, data, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         to_remove.append(response.data["id"])

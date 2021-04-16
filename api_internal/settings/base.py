@@ -9,7 +9,7 @@ CELERY_BROKER_URL = 'amqp://vep:HCL9aN7EAg46497kKJUnfm6B@rabbit'
 # TODO: api external for now
 API_INT_URL = 'http://api-external:8000'
 JOB_ENDPOINT = '/api/job/'
-ACTIVITY_ENDPOINT = '/api/raw_recording/'
+ACTIVITY_ENDPOINT = '/api/activity/'
 
 # SECRET, DO NOT SHARE THIS
 API_AUTHORIZATION_HEADER = {"Authorization": f"Api-Key 7icIJPFB.jrSwJeCFIpI4lKc79yxQqxQE21ZCi1sg"}

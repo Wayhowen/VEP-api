@@ -51,7 +51,7 @@
         url: endpoint,
         success: function (data) {
             savedData = data;
-            drawLineGraph(data, 'patientChartLine', 'line');
+            drawLineGraph(data.labels, data.datasets, 'patientChartLine', 'line');
         },
         error: function (error_data) {
             console.log(error_data);
@@ -59,18 +59,19 @@
     })
 
 
-    function drawLineGraph(data, id, type) {
-        lastLabels = data.labels;
-        lastDatasets = data.datasets;
+    function drawLineGraph(labels, datasets, id, type) {
+        lastLabels = labels;
+        lastDatasets = datasets;
         var ctx = document.getElementById(id).getContext('2d');
+
         myChart = new Chart(ctx, {
             // The type of chart we want to create
             type: type,
 
             // The data for our dataset
             data: {
-                labels: data.labels,
-                datasets: data.datasets
+                labels: labels,
+                datasets: datasets
             },
             // Configuration options go here
             options: {
@@ -89,14 +90,21 @@
     }
 
     function updateChart(chart, label, data) {
-        chart.data.labels.push(label);
-        chart.data.datasets.forEach((dataset, index) => {
-            let dataList = data.datasets[index].data;
-            let newData = dataList.slice(lastDatasets[index].data.length)
-            console.log(dataList.length)
-            console.log(lastDatasets[index].data.length)
-            dataset.data.push(newData);
-        });
+        if (chart.data.datasets.length === 0 && label.length !== 0) {
+            drawLineGraph(label, data.datasets, 'patientChartLine', 'line');
+        }
+        else if (label.length !== 0) {
+            console.log("updating")
+            console.log(label, data)
+            chart.data.labels.push(label);
+            chart.data.datasets.forEach((dataset, index) => {
+                let dataList = data.datasets[index].data;
+                let newData = dataList.slice(lastDatasets[index].data.length);
+                console.log(dataList.length);
+                console.log(lastDatasets[index].data.length);
+                dataset.data.push(newData);
+            });
+        }
         chart.update();
 
         lastLabels = data.labels;
@@ -122,5 +130,4 @@
 
 </script>
 </body>
-
 </html>

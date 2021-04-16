@@ -6,8 +6,10 @@ from persistence.models.data_models.raw_recording import RawRecording
 
 class ActivityResult(models.Model):
     feedback = models.TextField()
-    raw_recording = models.ForeignKey(null=False, to=RawRecording, on_delete=models.CASCADE)
-    patient = models.ForeignKey(null=False, to=Patient, on_delete=models.PROTECT)
+    raw_recording = models.ForeignKey(null=False, to=RawRecording, on_delete=models.CASCADE,
+                                      related_name="activity_result")
+    patient = models.ForeignKey(null=False, to=Patient, on_delete=models.PROTECT,
+                                related_name="activity_results")
     processing_result = models.JSONField(null=True)
 
     def delete(self, *args, **kwargs):
