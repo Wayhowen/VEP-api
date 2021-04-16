@@ -9,7 +9,8 @@ class ActivityCreateResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActivityResult
-        fields = "__all__"
+        fields = ("id", "raw_recording", "feedback", "patient", "processing_result")
+        ref_name = "ActivityResult"
 
     def create(self, validated_data):
         raw_recording_serializer = RawRecordingSerializer(data=validated_data.pop("raw_recording"))
@@ -17,6 +18,7 @@ class ActivityCreateResultSerializer(serializers.ModelSerializer):
             raw_recording_serializer.save()
         raw_recording = raw_recording_serializer.instance
         validated_data["raw_recording_id"] = raw_recording.id
+
         if validated_data["patient"].patient_account.type == "PT":
             activity_result = ActivityResult.objects.create(**validated_data)
             return activity_result
@@ -32,7 +34,7 @@ class ActivityGetUpdateDeleteSerializer(serializers.ModelSerializer):
         extra_kwargs = {"file": {"read_only": True}}
 
     def update(self, instance, validated_data):
-        if patient := validated_data["patient"]:
+        if patient := validated_data.get("patient", None):
             if patient.patient_account.type != "PT":
                 raise serializers.ValidationError(
                     {"Error": "Data must be assigned to patient account"})

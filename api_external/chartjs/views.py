@@ -1,15 +1,9 @@
-# from django.http import JsonResponse
-import random
-
 from django.shortcuts import render
 from django.views.generic import View
-
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-
-MEMORY = [0, 10, 5, 2, 20, 30, 45]
-MEMORY2 = list(reversed(MEMORY))
+from persistence.models import Patient
 
 
 class HomeView(View):
@@ -17,32 +11,89 @@ class HomeView(View):
         return render(request, 'chartjs/index.html')
 
 
+COLOURS = {
+    "transparent": 'rgba(255,100,200,0)',
+    "line": [
+        'rgb(220,10,10)',
+        'rgb(220,192,10)',
+        'rgb(49,220,10)',
+        'rgb(10,220,188)',
+        'rgb(10,70,220)',
+        'rgb(110,50,194)',
+        'rgb(205,21,239)',
+        'rgb(208,118,18)',
+        'rgb(16,0,0)',
+        'rgb(87,66,60)',
+        'rgb(127,116,116)',
+        'rgb(111,1,1)'
+    ]
+}
+
+"""
+"red"
+"yellow"
+"green"
+"turquoise"
+"blue"
+"purple"
+"pink"
+"orange"
+"black"
+"brown"
+"gray"
+"dark_red"
+"""
+
 class ChartData(APIView):
     authentication_classes = []
     permission_classes = []
 
     def get(self, request, patient_id):
-        print(patient_id)
-        MEMORY.append(random.randint(0, 100))
-        MEMORY2.append(random.randint(0, 100))
-        chartdata = MEMORY
-        anotherdata = MEMORY2
-        labels = [no for no in range(0, len(chartdata))]
+        label_template = "training no. _"
+        labels = []
+        datasets = []
+        last_used_colour = -1
+
+        patient = Patient.objects.prefetch_related("activity_results").order_by("activity_results__id")\
+            .get(id=patient_id)
+        for index, ac in enumerate(patient.activity_results.all()):
+            if ac.processing_result:
+                labels.append(label_template.replace("_", str(index)))
+                for key, value in ac.processing_result.items():
+                    li = self.find_label_index(key, datasets)
+                    if li is not None:
+                        datasets[li]["data"].append(value)
+                    else:
+                        last_used_colour += 1
+                        line = {
+                            "label": key,
+                            "data": [value],
+                            "backgroundColor": COLOURS["transparent"],
+                            "borderColor": COLOURS["line"][last_used_colour]
+                        }
+                        datasets.append(line)
         data = {
             "labels": labels,
-            "datasets": [
-                {
-                    "label": "Steps Number",
-                    "data": chartdata,
-                    "backgroundColor": 'rgba(255,100,200,0)',
-                    'borderColor': 'rgba(255,3,3)'
-                },
-                {
-                    "label": "Asymetry",
-                    "data": anotherdata,
-                    "backgroundColor": 'rgba(255,100,200,0)',
-                    'borderColor':'rgba(255,251,3)',
-                }
-            ]
+            "datasets": datasets
+            #     "datasets": [
+            #         {
+            #             "label": "Steps Number",
+            #             "data": chartdata,
+            #             "backgroundColor": 'rgba(255,100,200,0)',
+            #             'borderColor': 'rgba(255,3,3)'
+            #         },
+            #         {
+            #             "label": "Asymetry",
+            #             "data": anotherdata,
+            #             "backgroundColor": 'rgba(255,100,200,0)',
+            #             'borderColor':'rgba(255,251,3)',
+            #         }
+            #     ]
         }
         return Response(data)
+
+    def find_label_index(self, label, datasets):
+        for index, line in enumerate(datasets):
+            if label == line["label"]:
+                return index
+        return None

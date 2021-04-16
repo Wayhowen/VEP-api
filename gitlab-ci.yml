@@ -1,0 +1,10 @@
+stages:
+  - test
+  - build
+  - deploy
+
+external_api_uni_tests:
+  image: run_external_unit_tests
+  stage: test
+  script:
+    docker-compose up run_external_unit_tests

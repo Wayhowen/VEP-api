@@ -24,7 +24,7 @@ class BaseProcessor(SingletonMixin):
 
         self._get_and_update_job_details(job)
 
-        raw_data_file_location = self._get_raw_data_file(job.activity_result_id)
+        raw_data_file_location = self._get_raw_data_file(job)
         data_folder_location = self.storage_handler.unzip_file(raw_data_file_location)
 
         try:
@@ -32,9 +32,7 @@ class BaseProcessor(SingletonMixin):
         except Exception as e:
             print(traceback.print_exc())
 
-        # TODO: Fake job processing for now
         try:
-            # time.sleep(30)
             preprocessed_data = self._preprocess_data(activity_dict)
             job.processed_data = self._process_data(preprocessed_data)
         except Exception:
@@ -55,11 +53,9 @@ class BaseProcessor(SingletonMixin):
             job_details = {}
         job.set_job_details(job_details)
 
-    def _get_raw_data_file(self, activity_result_id):
-        response = self.request_handler.send_request("POST",
-                                                     f"{settings.API_INT_URL}{settings.ACTIVITY_ENDPOINT}",
-                                                     json={"activity_id": activity_result_id})
-        filename = response.json()['raw_recordings'][0]["walk"]["file_url"]
+    def _get_raw_data_file(self, job):
+        response = self.request_handler.send_request("GET", job.activity_result_url)
+        filename = response.json()['raw_recording']["file"]
         file_location = self.request_handler.download_file(filename)
         return file_location
 
@@ -80,3 +76,5 @@ class BaseProcessor(SingletonMixin):
         job.set_finished()
         job.update_job_status(3)
         self.request_handler.send_request("PUT", job.job_put_url, json=job.as_json())
+        self.request_handler.send_request("PUT", job.activity_result_url,
+                                          json=job.processed_data.as_json())

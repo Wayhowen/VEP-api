@@ -32,7 +32,7 @@ urlpatterns = [
     path('users/<int:user_id>', views.UserUpdateAPIView.as_view(), name='users_details'),
     path('job/', views.CreateJobAPIView.as_view(), name='job'),
     path('job/<str:uid>', views.GetUpdateJobAPIView.as_view(), name='job_details'),
-    path('raw_recording/', views.raw_recording_data_view, name='raw_recording'),
+    path('activity_result_list/', views.activity_result_aggregation_view, name='raw_recording'),
     path('activity/', views.ActivityCreateAPIView.as_view(), name='activity'),
     path('activity/<int:activity_id>', views.ActivityGetUpdateDeleteAPIView.as_view(),
          name='activity'),

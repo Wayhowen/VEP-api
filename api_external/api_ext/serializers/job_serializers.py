@@ -24,7 +24,7 @@ class JobGetUpdateSerializer(serializers.ModelSerializer):
         model = Job
         fields = ('uid', 'status', 'start_datetime', 'finish_datetime', 'error_message',
                   'patient_id', 'activity_result_id')
-        read_only_fields = ('uid', 'status', 'patient_id', 'activity_result_id')
+        read_only_fields = ('uid', 'patient_id', 'activity_result_id')
         extra_kwargs = {
             'status': {'required': False},
             'start_datetime': {'required': False},

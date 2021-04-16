@@ -11,14 +11,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 
-from api_ext.serializers.job_serializer import JobCreateSerializer, JobGetUpdateSerializer
+
+from api_ext.serializers.job_serializers import JobCreateSerializer, JobGetUpdateSerializer
 from persistence.models import CustomUser, Job, Patient, ActivityResult
 from persistence.permissions import PractitionerPermissions, FamilyPermissions, PatientPermissions, \
     AdminPermissions
 from tasks.celeryapp import app as celery_app
 from .activity_handler import Handler as ActivityHandler
 from .custom_parser import MultipartJsonParser
-from .serializers.activity_result_serializer import ActivityCreateResultSerializer, \
+from .serializers.activity_result_serializers import ActivityCreateResultSerializer, \
     ActivityGetUpdateDeleteSerializer
 from .serializers.patient_serializer import PatientSerializer
 from .serializers.user_serializer import UserUpdateDeleteSerializer, UserCreateSerializer
@@ -222,18 +223,19 @@ class GetUpdateJobAPIView(APIView):
                          404: openapi.Response("Query did not find any data"),
                      },
                      tags=['Data Management'],
-                     operation_description="Endpoint for getting raw activity data for activities done by users"
+                     operation_description="Endpoint for getting raw activity data for activities done by users",
+                     operation_id="activity_result_list",
                      )
 @api_view(['POST'])
 @permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions | PatientPermissions |
                      FamilyPermissions | AdminPermissions])
-def raw_recording_data_view(request):
+def activity_result_aggregation_view(request):
     data_handler = ActivityHandler()
     response_data = data_handler.process(request)
     return Response(data=response_data)
 
 
-@permission_classes([])
+
 class ActivityCreateAPIView(APIView):
     parser_classes = (MultipartJsonParser, JSONParser)
     serializer_class = ActivityCreateResultSerializer
@@ -300,4 +302,47 @@ class PatientAPIView(APIView):
         patient = get_object_or_404(Patient, pk=patient_id)
         self.check_object_permissions(request, patient)
         serializer = self.serializer_class(patient)
+        return Response(serializer.data)
+
+
+@permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions | PatientPermissions |
+                     FamilyPermissions | AdminPermissions])
+class GetUpdateActivityAPIView(APIView):
+    serializer_class = ActivityGetUpdateDeleteSerializer
+
+    @swagger_auto_schema(responses={200: ActivityGetUpdateDeleteSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions"),
+                                    404: openapi.Response("Object does not exist")},
+                         tags=["Data Management"],
+                         operation_description="Get details about Activity Result object")
+    def get(self, request, id):
+        activity_result = ActivityResult.objects.get(id=id)
+        serializer = self.serializer_class(activity_result)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(request_body=openapi.Schema(
+                         type=openapi.TYPE_OBJECT,
+                         required=['email', ],
+                         properties={
+                             'feedback': openapi.Schema(
+                                 title="Feedback from practitioner about the activity result",
+                                 type=openapi.TYPE_STRING,
+                                 max_length="256"),
+                             'processing_result': openapi.Schema(
+                                 title="The JSON result of processing done in the worker",
+                                 type=openapi.TYPE_OBJECT),
+                         }),
+                         responses={200: ActivityGetUpdateDeleteSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Data Management"],
+                         operation_description="Endpoint for updating activity data.\n")
+    def put(self, request, id):
+        activity_result = ActivityResult.objects.get(id=id)
+        serializer = self.serializer_class(activity_result, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors)
         return Response(serializer.data)
