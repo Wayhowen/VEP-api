@@ -31,7 +31,7 @@ class FuzzyUniverseCreator:
         return universes
 
     def _create_user_score(self):
-        user_score = control.Consequent(np.arange(-1, 2, 1), 'user_score')
+        user_score = control.Consequent(np.arange(-1, 1.5, 0.5), 'user_score')
         user_score['bad'] = trimf(user_score.universe, [-1, -1, 0])
         user_score['average'] = trimf(user_score.universe, [-0.5, 0, 0.5])
         user_score['good'] = trimf(user_score.universe, [0, 1, 1])
