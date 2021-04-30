@@ -6,7 +6,6 @@ from persistence.models import CustomUser, Patient
 from api_ext.tests.utils import check_sent_data
 
 creation_url = reverse('users')
-# update_url = reverse('users_details')
 
 
 # TODO: add user editing, updating, deleting and check if some fields return errors
@@ -57,7 +56,6 @@ class UserManagementTestCase(APITestCase):
                 'assigned_practitioner_id': 420, 'family_members': [421]}
         response = self.client.post(creation_url, data, format='json')
 
-        cu = CustomUser.objects.get(id=response.data['id'])
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         check_sent_data(data, response, self.assertEqual)
         self.assertIn("patient_id", response.data)

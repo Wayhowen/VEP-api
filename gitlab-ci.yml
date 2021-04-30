@@ -1,4 +1,5 @@
 stages:
+  - analysis
   - test
   - build
   - deploy
@@ -8,3 +9,21 @@ external_api_uni_tests:
   stage: test
   script:
     docker-compose up run_external_unit_tests
+
+internal_api_unit_tests:
+  image: run_internal_unit_tests
+  stage: test
+  script:
+    docker-compose up run_internal_unit_tests
+
+external_code_analysis:
+  image: api-external
+  stage: analysis
+  script:
+    docker-compose up static_code_analysis_external
+
+internal_code_analysis:
+  image: api-internal
+  stage: analysis
+  script:
+    docker-compose up static_code_analysis_internal

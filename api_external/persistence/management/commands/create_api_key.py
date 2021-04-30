@@ -7,4 +7,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         api_key, key = APIKey.objects.create_key(name="worker")
-        print(f"Do not share those! key: {key}, api_key: {api_key}")
+        print(f'Do not share those! key: "{key}", api_key: {api_key}')

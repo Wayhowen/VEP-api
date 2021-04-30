@@ -9,12 +9,12 @@ class Handler:
         pass
 
     def process(self, request: Request) -> dict:
-        if hasattr(request.user, "type"):
-            user_type = request.user.type
         dict_query = dict(request.data)
 
         if patient_email := dict_query.get("patient_email", None):
-            raw_recording_ids = ActivityResult.objects.filter(patient__patient_account__email=patient_email).values_list('raw_recording', flat=True)
+            raw_recording_ids = ActivityResult.objects.filter(
+                patient__patient_account__email=patient_email).values_list('raw_recording',
+                                                                           flat=True)
         elif patient_id := dict_query.get("patient_id", None):
             raw_recording_ids = ActivityResult.objects.filter(
                 patient__id=patient_id).values_list('raw_recording', flat=True)
@@ -57,6 +57,7 @@ class Handler:
         elif user_type == "SA":
             self._handle_system_administrator()
 
+    # TODO: add those methods
     def _handle_practitioner(self):
         pass
 

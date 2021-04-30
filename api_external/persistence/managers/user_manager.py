@@ -11,7 +11,7 @@ class CustomUserManager(BaseUserManager):
             user.set_unusable_password()
         user.save(using=self._db)
 
-        if family_members and (user_type == "PT" or user_type == "FM"):
+        if family_members and (user_type in ["PT", "FM"]):
             for family_member in family_members:
                 if user_type == "PT" and family_member.type == "FM" or \
                         user_type == "FM" and family_member.type == "PT":
@@ -23,8 +23,8 @@ class CustomUserManager(BaseUserManager):
                     user.assigned_patients.add(patient)
         return user
 
-    def create_superuser(self, email, phone_number, type, password):
-        user = self.create_user(email, phone_number, type, password)
+    def create_superuser(self, email, phone_number, user_type, password):
+        user = self.create_user(email, phone_number, user_type, password)
         user.is_admin = True
         user.save(using=self._db)
         return user

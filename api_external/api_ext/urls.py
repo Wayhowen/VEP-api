@@ -10,7 +10,7 @@ schema_view = get_schema_view(
     openapi.Info(
         title="VEP API",
         default_version='v1',
-        description="Test description",
+        description="Backend RESTful API for Virtual Exercise Practitioner App",
         # TODO: ADD terms of service
         terms_of_service="https://www.google.com/policies/terms/",
         contact=openapi.Contact(email="jas103@aber.ac.uk"),
@@ -36,5 +36,8 @@ urlpatterns = [
     path('activity/', views.ActivityCreateAPIView.as_view(), name='activity'),
     path('activity/<int:activity_id>', views.ActivityGetUpdateDeleteAPIView.as_view(),
          name='activity'),
-    path('patients/<int:patient_id>', views.PatientAPIView.as_view(), name='patients')
+    path('patients/<int:patient_id>', views.PatientAPIView.as_view(), name='patients'),
+    path('fuzzy_setup/', views.FuzzySetupCreateAPIView.as_view(), name='fuzzy_setup'),
+    path('fuzzy_setup/<int:patient_id>', views.FuzzySetupGetUpdateDeleteAPIView.as_view(),
+         name='fuzzy_setup')
 ]

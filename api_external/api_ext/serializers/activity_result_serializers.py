@@ -9,8 +9,13 @@ class ActivityCreateResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActivityResult
-        fields = ("id", "raw_recording", "feedback", "patient", "processing_result")
+        fields = ("id", "raw_recording", "feedback", "patient", "processing_result",
+                  "preprocessing_result")
         ref_name = "ActivityResult"
+        extra_kwargs = {
+            "processing_result": {"read_only": True},
+            "preprocessing_result": {"read_only": True},
+        }
 
     def create(self, validated_data):
         raw_recording_serializer = RawRecordingSerializer(data=validated_data.pop("raw_recording"))

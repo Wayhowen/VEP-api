@@ -13,7 +13,7 @@ class FFTCalculator:
     def __init__(self):
         pass
 
-    def calculateFFT(self, data, sr):
+    def calculate_fft(self, data, sr):
         data_points = len(data)
 
         sample_spacing = 1 / sr
@@ -22,10 +22,10 @@ class FFTCalculator:
         frequencies = np.linspace(0.0, 1.0 / (2.0 * sample_spacing), data_points // 2)
 
         # calculating fft using scipy library of python
-        FFT_data = fftpack.fft(data)
+        fft_data = fftpack.fft(data)
 
         # get the indices with the max value
-        peak_indexes = np.argmax(2.0 / data_points * np.abs(FFT_data[:data_points // 2])[:], axis=0)
+        peak_indexes = np.argmax(2.0 / data_points * np.abs(fft_data[:data_points // 2])[:], axis=0)
 
         # now use the indices to get the corresponding frequencies
         peak_frequencies = frequencies[peak_indexes]

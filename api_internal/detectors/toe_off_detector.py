@@ -15,9 +15,10 @@ class ToeOffDetector:
         # TODO: need to update it later on to make it adaptive
 
         # 0.5 is constant to adjust change in walk and 1000 is to convert in milliseconds
-        threshold = time[int(sampling_rate/3)]
+        threshold = time[int(sampling_rate / 3)]
 
-        # Sometime data is colletced as numpy array, however, to get index, we need data in list format
+        # Sometime data is colletced as numpy array, however, to get index, we need data in list
+        # format
         data = list(data)
 
         toe_offs = []
@@ -26,9 +27,9 @@ class ToeOffDetector:
 
         for index, peak in enumerate(max_peaks_indexes[:-1]):
             if time[current_peak] < time[peak] and (time[peak] - time[current_peak]) < threshold:
-                currentPeak = data.index(max(data[peak], data[current_peak]))
+                current_peak = data.index(max(data[peak], data[current_peak]))
 
-                if (time[max_peaks_indexes[index + 1]] - time[currentPeak]) > threshold:
+                if (time[max_peaks_indexes[index + 1]] - time[current_peak]) > threshold:
                     toe_offs.append(current_peak)
                     current_peak = max_peaks_indexes[index + 1]
 

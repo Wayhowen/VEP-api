@@ -1,0 +1,36 @@
+doc-warnings: false
+
+strictness: veryhigh
+
+ignore-paths:
+  - app/settings
+  - persistence/migrations
+  - manage.py
+
+ignore-patterns:
+  - (^|/)__init__.py(/|$)
+  - (^|/)wsgi.py(/|$)
+  - (^|/)urls.py(/|$)
+  - (^|/)apps.py(/|$)
+
+pylint:
+  disable:
+    - unused-argument
+    - too-few-public-methods
+    - too-many-ancestors
+    - line-too-long
+    - invalid-name
+    - bad-mcs-method-argument
+    - arguments-differ
+    - no-self-use
+    - broad-except
+    - too-many-arguments
+    - too-many-instance-attributes
+    - eval-used
+    - protected-access
+  options:
+    max-args : 8
+
+pep8:
+  options:
+    max-line-length: 100

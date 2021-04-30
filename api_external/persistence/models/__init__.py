@@ -1,3 +1,4 @@
+from .ai_config_models import *
 from .data_models import *
 from .custom_user import CustomUser
 from .job import Job

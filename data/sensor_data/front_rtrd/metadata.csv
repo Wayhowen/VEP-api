@@ -1,0 +1,24 @@
+name,value
+activityId,11
+activityName,Jakubs Activity
+startTimeStamp,1618495044427
+startHumanTimeStamp,2021-04-15T13:57:24.427
+endTimeStamp,1618495102965
+endHumanTimeStamp,2021-04-15T13:58:22.965
+ACCELEROMETER_INFO,https://developer.android.com/reference/android/hardware/SensorEvent#sensor.type_accelerometer:
+ACCELEROMETER_TIMES,ACCELEROMETER_TIME.csv
+ACCELEROMETER_x,ACCELEROMETER_x.csv
+ACCELEROMETER_y,ACCELEROMETER_y.csv
+ACCELEROMETER_z,ACCELEROMETER_z.csv
+ROTATION_VECTOR_INFO,https://developer.android.com/reference/android/hardware/SensorEvent#sensor.type_rotation_vector:
+ROTATION_VECTOR_TIMES,ROTATION_VECTOR_TIME.csv
+ROTATION_VECTOR_xsine,ROTATION_VECTOR_xsine.csv
+ROTATION_VECTOR_ysine,ROTATION_VECTOR_ysine.csv
+ROTATION_VECTOR_zsine,ROTATION_VECTOR_zsine.csv
+ROTATION_VECTOR_cos,ROTATION_VECTOR_cos.csv
+ROTATION_VECTOR_accuracy,ROTATION_VECTOR_accuracy.csv
+GYROSCOPE_INFO,https://developer.android.com/reference/android/hardware/SensorEvent#sensor.type_gyroscope:
+GYROSCOPE_TIMES,GYROSCOPE_TIME.csv
+GYROSCOPE_x,GYROSCOPE_x.csv
+GYROSCOPE_y,GYROSCOPE_y.csv
+GYROSCOPE_z,GYROSCOPE_z.csv

@@ -4,23 +4,25 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 
-
 from api_ext.serializers.job_serializers import JobCreateSerializer, JobGetUpdateSerializer
 from persistence.models import CustomUser, Job, Patient, ActivityResult
-from persistence.permissions import PractitionerPermissions, FamilyPermissions, PatientPermissions, \
-    AdminPermissions
+from persistence.models.ai_config_models.fuzzy_setup import FuzzySetup
+from persistence.permissions import PractitionerPermissions, FamilyPermissions, \
+    PatientPermissions, AdminPermissions
 from tasks.celeryapp import app as celery_app
 from .activity_handler import Handler as ActivityHandler
 from .custom_parser import MultipartJsonParser
 from .serializers.activity_result_serializers import ActivityCreateResultSerializer, \
     ActivityGetUpdateDeleteSerializer
+from .serializers.fuzzy_setup_serializer import FuzzySetupCreateSerializer, \
+    FuzzySetupGetUpdateDeleteSerializer
 from .serializers.patient_serializer import PatientSerializer
 from .serializers.user_serializer import UserUpdateDeleteSerializer, UserCreateSerializer
 
@@ -96,11 +98,11 @@ class UserCreateAPIView(APIView):
     """
     serializer_class = UserCreateSerializer
 
-    # TODO: docs response says it returns password but it doesn't - see:
+    # docs response says it returns password but it doesn't - see:
     # https://github.com/axnsan12/drf-yasg/issues/70
     @swagger_auto_schema(request_body=UserCreateSerializer(many=False),
                          responses={200: UserCreateSerializer(many=False)},
-                         tags=["Users"], )
+                         tags=["Users"], operation_description="Endpoint for creating users.")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -115,7 +117,7 @@ class UserUpdateAPIView(APIView):
 
     @swagger_auto_schema(request_body=UserUpdateDeleteSerializer(many=False),
                          responses={200: UserUpdateDeleteSerializer(many=False)},
-                         tags=["Users"], )
+                         tags=["Users"], operation_description="Endpoint for updating users data.")
     def put(self, request, user_id):
         user = get_object_or_404(CustomUser, pk=user_id)
         serializer = self.serializer_class(user, data=request.data)
@@ -125,7 +127,8 @@ class UserUpdateAPIView(APIView):
             return Response(serializer.errors)
         return Response(serializer.data)
 
-    # TODO: Might add reassigning relatives, patients, etc
+    @swagger_auto_schema(responses={200: "User instance sucessfully deleted"},
+                         tags=["Users"], operation_description="Endpoint for deleting users.")
     def delete(self, request, user_id):
         user = get_object_or_404(CustomUser, pk=user_id)
         user.delete()
@@ -177,7 +180,8 @@ class GetUpdateJobAPIView(APIView):
                                         "User not logged in or does not have correct permissions"),
                                     404: openapi.Response("Object does not exist")},
                          tags=["Job"],
-                         operation_description="Update job object. Endpoint meant for workers only and should not be used by users.")
+                         operation_description="Update job object. Endpoint meant for workers only"
+                                               " and should not be used by users.")
     def put(self, request, uid):
         job = get_object_or_404(Job, uid=uid)
         serializer = self.serializer_class(job, data=request.data, partial=True)
@@ -223,17 +227,17 @@ class GetUpdateJobAPIView(APIView):
                          404: openapi.Response("Query did not find any data"),
                      },
                      tags=['Data Management'],
-                     operation_description="Endpoint for getting raw activity data for activities done by users",
+                     operation_description="Endpoint for getting raw activity data for activities"
+                                           " done by users",
                      operation_id="activity_result_list",
                      )
 @api_view(['POST'])
 @permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions | PatientPermissions |
-                     FamilyPermissions | AdminPermissions])
+                     FamilyPermissions])
 def activity_result_aggregation_view(request):
     data_handler = ActivityHandler()
     response_data = data_handler.process(request)
     return Response(data=response_data)
-
 
 
 class ActivityCreateAPIView(APIView):
@@ -246,9 +250,11 @@ class ActivityCreateAPIView(APIView):
                                         "User not logged in or does not have correct permissions")},
                          tags=["Data Management"],
                          operation_description="Endpoint for inserting activity data.\n"
-                                               "In the body, there should be another parameter with key 'file' and a value of a zipped raw activity data.\n"
-                                               "This endpoint should be requested with multipart/form request type.")
-    def post(self, request, format=None):
+                                               "In the body, there should be another parameter with"
+                                               " key 'file' and a value of a zipped raw activity"
+                                               " data.\nThis endpoint should be requested with"
+                                               " multipart/form request type.")
+    def post(self, request):
         file_obj = request.FILES['file']
 
         request.data['raw_recording']['file'] = file_obj
@@ -263,22 +269,22 @@ class ActivityCreateAPIView(APIView):
 class ActivityGetUpdateDeleteAPIView(APIView):
     serializer_class = ActivityGetUpdateDeleteSerializer
 
-    @swagger_auto_schema(request_body=ActivityCreateResultSerializer(many=False),
-                         responses={200: ActivityCreateResultSerializer(many=False),
+    @swagger_auto_schema(responses={200: ActivityGetUpdateDeleteSerializer(many=False),
                                     403: openapi.Response(
                                         "User not logged in or does not have correct permissions")},
                          tags=["Data Management"],
-                         operation_description="Endpoint for inserting activity data.\n"
-                                               "In the body, there should be another parameter "
-                                               "with key 'file' and a value of a zipped raw "
-                                               "activity data.\n "
-                                               "This endpoint should be requested with "
-                                               "multipart/form request type.")
+                         operation_description="Endpoint for getting activity data")
     def get(self, request, activity_id):
         activity_result = get_object_or_404(ActivityResult, id=activity_id)
         serializer = self.serializer_class(activity_result)
         return Response(serializer.data)
 
+    @swagger_auto_schema(request_body=ActivityGetUpdateDeleteSerializer(many=False),
+                         responses={200: ActivityGetUpdateDeleteSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Data Management"],
+                         operation_description="Endpoint for updating activity data")
     def put(self, request, activity_id):
         activity_result = get_object_or_404(ActivityResult, id=activity_id)
         serializer = self.serializer_class(activity_result, data=request.data, partial=True)
@@ -287,6 +293,11 @@ class ActivityGetUpdateDeleteAPIView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors)
 
+    @swagger_auto_schema(responses={200: "Object sucessfully deleted",
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Data Management"],
+                         operation_description="Endpoint for removing activity data")
     def delete(self, request, activity_id):
         activity_result = get_object_or_404(ActivityResult, id=activity_id)
         activity_result.delete()
@@ -298,6 +309,11 @@ class ActivityGetUpdateDeleteAPIView(APIView):
 class PatientAPIView(APIView):
     serializer_class = PatientSerializer
 
+    @swagger_auto_schema(responses={200: PatientSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Users"],
+                         operation_description="Endpoint for getting patient data")
     def get(self, request, patient_id):
         patient = get_object_or_404(Patient, pk=patient_id)
         self.check_object_permissions(request, patient)
@@ -305,44 +321,64 @@ class PatientAPIView(APIView):
         return Response(serializer.data)
 
 
-@permission_classes([HasAPIKey | AdminPermissions | PractitionerPermissions | PatientPermissions |
-                     FamilyPermissions | AdminPermissions])
-class GetUpdateActivityAPIView(APIView):
-    serializer_class = ActivityGetUpdateDeleteSerializer
+@permission_classes([AdminPermissions | PractitionerPermissions])
+class FuzzySetupCreateAPIView(APIView):
+    serializer_class = FuzzySetupCreateSerializer
 
-    @swagger_auto_schema(responses={200: ActivityGetUpdateDeleteSerializer(many=False),
-                                    403: openapi.Response(
-                                        "User not logged in or does not have correct permissions"),
-                                    404: openapi.Response("Object does not exist")},
-                         tags=["Data Management"],
-                         operation_description="Get details about Activity Result object")
-    def get(self, request, id):
-        activity_result = ActivityResult.objects.get(id=id)
-        serializer = self.serializer_class(activity_result)
-        return Response(serializer.data)
-
-    @swagger_auto_schema(request_body=openapi.Schema(
-                         type=openapi.TYPE_OBJECT,
-                         required=['email', ],
-                         properties={
-                             'feedback': openapi.Schema(
-                                 title="Feedback from practitioner about the activity result",
-                                 type=openapi.TYPE_STRING,
-                                 max_length="256"),
-                             'processing_result': openapi.Schema(
-                                 title="The JSON result of processing done in the worker",
-                                 type=openapi.TYPE_OBJECT),
-                         }),
-                         responses={200: ActivityGetUpdateDeleteSerializer(many=False),
+    @swagger_auto_schema(request_body=FuzzySetupCreateSerializer(many=False),
+                         responses={200: FuzzySetupCreateSerializer(many=False),
                                     403: openapi.Response(
                                         "User not logged in or does not have correct permissions")},
-                         tags=["Data Management"],
-                         operation_description="Endpoint for updating activity data.\n")
-    def put(self, request, id):
-        activity_result = ActivityResult.objects.get(id=id)
-        serializer = self.serializer_class(activity_result, data=request.data)
+                         tags=["Fuzzy Logic Setup"],
+                         operation_description="Endpoint for creating fuzzy setup data")
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors)
+
+
+@permission_classes([AdminPermissions | PractitionerPermissions | HasAPIKey])
+class FuzzySetupGetUpdateDeleteAPIView(APIView):
+    serializer_class = FuzzySetupGetUpdateDeleteSerializer
+
+    @swagger_auto_schema(responses={200: FuzzySetupGetUpdateDeleteSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Fuzzy Logic Setup"],
+                         operation_description="Endpoint for getting fuzzy setup data")
+    def get(self, request, patient_id):
+        fuzzy_setup = FuzzySetup.objects.filter(patient_id=patient_id)
+        if not fuzzy_setup.exists():
+            fuzzy_setup = FuzzySetup.objects.get(patient_id=None)
         else:
-            return Response(serializer.errors)
+            fuzzy_setup = fuzzy_setup.get()
+            self.check_object_permissions(request, fuzzy_setup)
+        serializer = self.serializer_class(fuzzy_setup)
         return Response(serializer.data)
+
+    @swagger_auto_schema(request_body=FuzzySetupGetUpdateDeleteSerializer(many=False),
+                         responses={200: FuzzySetupGetUpdateDeleteSerializer(many=False),
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Fuzzy Logic Setup"],
+                         operation_description="Endpoint for updating fuzzy setup data")
+    def put(self, request, patient_id):
+        fuzzy_setup = get_object_or_404(FuzzySetup, patient_id=patient_id)
+        self.check_object_permissions(request, fuzzy_setup)
+        serializer = self.serializer_class(fuzzy_setup, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+    @swagger_auto_schema(responses={200: "Instance successfully deleted",
+                                    403: openapi.Response(
+                                        "User not logged in or does not have correct permissions")},
+                         tags=["Fuzzy Logic Setup"],
+                         operation_description="Endpoint for deleting fuzzy setup instances")
+    def delete(self, request, patient_id):
+        fuzzy_setup = get_object_or_404(FuzzySetup, patient_id=patient_id)
+        fuzzy_setup.delete()
+        return Response(status=200)

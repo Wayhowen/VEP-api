@@ -16,7 +16,6 @@ class PeaksDetector:
         threshold = np.mean(data) + 0.5 * np.std(data)
 
         peak_indexes = []
-        peak_amplitudes = []
 
         peak = -np.inf
 
@@ -27,7 +26,6 @@ class PeaksDetector:
 
                 if peak > data[index] and peak > threshold:
                     peak_indexes.append(index)
-                    peak_amplitudes.append("{:.2f}".format(data[index]))
             peak = possible_peak
 
-        return peak_indexes, peak_amplitudes
+        return peak_indexes

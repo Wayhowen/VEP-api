@@ -18,4 +18,7 @@ class GaitAnalysisResult:
         return f"{vars(self)}"
 
     def as_json(self):
-        return {"processing_result" : vars(self)}
+        return vars(self)
+
+    def as_dict(self):
+        return vars(self)

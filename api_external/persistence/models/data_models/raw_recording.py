@@ -3,19 +3,18 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 
-# TODO: Change timestamps to actual dates
 class RawRecording(models.Model):
     name = models.CharField(max_length=256)
     start_time = models.BigIntegerField(null=False)
     finish_time = models.BigIntegerField(null=False)
     file = models.FileField(upload_to=settings.RECORDINGS_FOLDER,
-                            validators=[RegexValidator(regex='.+\.zip$',
+                            validators=[RegexValidator(regex=r'.+\.zip$',
                                                        message='The file must be of type .zip',
                                                        code='nomatch')])
 
-    def delete(self, *args, **kwargs):
+    def delete(self, using=None, keep_parents=None):
         self.file.delete(save=False)
-        super().delete(*args, **kwargs)
+        super().delete(using, keep_parents)
 
     def update(self, fields_dict):
         for key, value in fields_dict.items():
