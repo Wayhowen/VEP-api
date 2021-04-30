@@ -9,7 +9,7 @@ services:
     environment:
       API_EXT_ENABLED: 'true'
       CHARTS_ENABLED: 'true'
-      DJANGO_SETTINGS_MODULE: app.settings.base
+      DJANGO_SETTINGS_MODULE: app.settings.prod
     volumes:
       - ./api_external/:/code
     ports:
