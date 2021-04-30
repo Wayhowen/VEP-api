@@ -19,8 +19,8 @@ class Handler:
             for file_pointer, func in file_pointers.items():
                 if file_pointer in metadata:
                     file_location = os.path.join(activity_folder, metadata[file_pointer])
-                    activity_dict[device][file_pointer] = self.csv_handler.read_file_contents(file_location,
-                                                                                              func_to_apply=func)
+                    activity_dict[device][file_pointer] = self.csv_handler.read_file_contents(
+                        file_location, func_to_apply=func)
 
         return activity_dict
 

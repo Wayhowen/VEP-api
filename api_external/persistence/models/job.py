@@ -8,9 +8,6 @@ from persistence.models.data_models.activity_result import ActivityResult
 from persistence.models.patient import Patient
 
 
-# TODO: Add jobs aggregation for users/entries
-
-
 class Job(models.Model):
     uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     type = models.IntegerField(choices=JobType.choices())

@@ -4,7 +4,7 @@ from enum import Enum
 class ChoiceEnum(Enum):
     @classmethod
     def all(cls):
-        return [x for x in cls]
+        return list(cls.__members__.values())
 
     @classmethod
     def choices(cls):

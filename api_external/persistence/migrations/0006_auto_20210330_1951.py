@@ -15,13 +15,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='job',
             name='patient',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='persistence.patient'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT,
+                                    to='persistence.patient'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='job',
             name='activity_result',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE,
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT,
                                     to='persistence.activityresult'),
         ),
         migrations.AlterField(

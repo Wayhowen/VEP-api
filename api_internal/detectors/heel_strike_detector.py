@@ -14,7 +14,7 @@ class HeelStrikeDetector:
     def detect_heel_strikes(self, data, peaks):
         heel_strikes = []
 
-        if type(data) is not list and len(data) != 0:
+        if not isinstance(data, list) and len(data) != 0:
             data = data.tolist()
 
         for index, peak in enumerate(peaks[1:]):

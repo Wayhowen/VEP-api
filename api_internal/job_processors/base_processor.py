@@ -1,9 +1,6 @@
-import time
-import traceback
 from abc import abstractmethod
 from json import JSONDecodeError
 
-import settings
 from dto.job import Job
 from handlers.request_handler import Handler as RequestHandler
 from handlers.storage_handler import Handler as StorageHandler
@@ -23,21 +20,28 @@ class BaseProcessor(SingletonMixin):
         self._start_job(job)
 
         self._get_and_update_job_details(job)
-
         raw_data_file_location = self._get_raw_data_file(job)
         data_folder_location = self.storage_handler.unzip_file(raw_data_file_location)
-
         try:
             activity_dict = self.activity_handler.raw_activity_to_dict(data_folder_location)
         except Exception as e:
-            print(traceback.print_exc())
+            self.storage_handler.remove_folder(data_folder_location)
+            job.error_message = str(e)
+            self.request_handler.send_request("PUT", job.job_put_url, json=job.as_json())
+            return job
 
         try:
-            preprocessed_data = self._preprocess_data(activity_dict)
-            job.processed_data = self._process_data(preprocessed_data)
-        except Exception:
+            job.preprocessed_data = self._preprocess_data(activity_dict)
+            job.processed_data = self._process_data(job.preprocessed_data,
+                                                    patient_id=job.patient_id)
+            if "error" in job.processed_data:
+                job.error_message = job.processed_data["error"]
+            else:
+                job.processed_data = job.processed_data
+        except Exception as e:
             self.storage_handler.remove_folder(data_folder_location)
-            job.error_message = "File management gone wrong"
+            job.error_message = str(e)
+            self.request_handler.send_request("PUT", job.job_put_url, json=job.as_json())
             return job
 
         self.storage_handler.remove_folder(data_folder_location)
@@ -60,11 +64,11 @@ class BaseProcessor(SingletonMixin):
         return file_location
 
     @abstractmethod
-    def _preprocess_data(self, data):
+    def _preprocess_data(self, data, *args, **kwargs):
         pass
 
     @abstractmethod
-    def _process_data(self, data):
+    def _process_data(self, data, *arga, **kwargs) -> dict:
         pass
 
     def _start_job(self, job):
@@ -76,5 +80,7 @@ class BaseProcessor(SingletonMixin):
         job.set_finished()
         job.update_job_status(3)
         self.request_handler.send_request("PUT", job.job_put_url, json=job.as_json())
-        self.request_handler.send_request("PUT", job.activity_result_url,
-                                          json=job.processed_data.as_json())
+        self.request_handler.send_request("PUT", job.activity_result_url, json={
+            "preprocessing_result": job.preprocessed_data.as_json(),
+            "processing_result": job.processed_data
+        })

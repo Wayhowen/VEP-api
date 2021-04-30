@@ -96,7 +96,6 @@ class ActivityViewTestCase(APITestCase):
         self.assertIn("raw_recording", response.data)
         self.assertIn("start_time", response.data["raw_recording"])
         self.assertIn("finish_time", response.data["raw_recording"])
-        self.assertIn("feedback", response.data)
         self.assertIn("patient", response.data)
 
         self.assertNotIn("processing_result", response.data)

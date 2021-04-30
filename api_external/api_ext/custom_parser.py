@@ -3,6 +3,10 @@ import json
 from rest_framework import parsers
 
 
+# Class created in order to be able to add JSON to multipart data, in accordance with
+# https://stackoverflow.com/questions/30176570/using-django-rest-framework-how-can-i-upload-a-file-and-send-a-json-payload
+
+
 class MultipartJsonParser(parsers.MultiPartParser):
 
     def parse(self, stream, media_type=None, parser_context=None):
@@ -14,7 +18,7 @@ class MultipartJsonParser(parsers.MultiPartParser):
         data = {}
 
         for key, value in result.data.items():
-            if type(value) != str:
+            if not isinstance(value, str):
                 data[key] = value
                 continue
             if '{' in value or "[" in value:

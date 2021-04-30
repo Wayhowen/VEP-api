@@ -16,7 +16,6 @@ class Extractor:
         gait_parameters = self.gait_parameters_extractor.extract_features(peaks.heel_strike_times,
                                                                           peaks.toe_off_times)
 
-        print(f"steps: {limit_by/gait_parameters.step_seconds}")
         return gait_parameters
 
     def _limit_to_seconds(self, no_of_seconds, times, acc_z):

@@ -7,8 +7,6 @@ from persistence.enums import UserType
 from persistence.models import CustomUser, Patient
 
 
-# TODO: https://www.django-rest-framework.org/api-guide/generic-views/
-# TODO: User should belong to one group only, check how to make it work properly
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     patient_id = serializers.SerializerMethodField(read_only=True)
@@ -38,10 +36,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         user.groups.add(group)
 
-
         self._create_patient_if_pt(user, validated_data.get("assigned_practitioner_id"))
-        self._assign_practitioner_to_patients_if_pr_or_pt(user,
-                                                          validated_data.get("assigned_practitioner_id"))
+        self._assign_practitioner_to_patients(user,
+                                              validated_data.get("assigned_practitioner_id"))
         return user
 
     def _create_patient_if_pt(self, user, assigned_practitioner_id):
@@ -49,15 +46,19 @@ class UserCreateSerializer(serializers.ModelSerializer):
             if assigned_practitioner_id:
                 assigned_practitioner = get_object_or_404(CustomUser, id=assigned_practitioner_id)
                 if assigned_practitioner.type == "PR":
-                    patient = Patient.objects.create(patient_account=user,
-                                                     assigned_practitioner_id=assigned_practitioner_id)
+                    patient = Patient.objects.create(
+                        patient_account=user,
+                        assigned_practitioner_id=assigned_practitioner_id)
                 else:
-                    raise serializers.ValidationError({"Error": "Selected practitioner is not a practitioner"})
+                    raise serializers.ValidationError(
+                        {"Error": "Selected practitioner is not a practitioner"})
             else:
-                raise serializers.ValidationError({"Error": "No Practitioner assigned for this user"})
+                raise serializers.ValidationError(
+                    {"Error": "No Practitioner assigned for this user"})
             return patient
+        return None
 
-    def _assign_practitioner_to_patients_if_pr_or_pt(self, user, assigned_practitioner_id):
+    def _assign_practitioner_to_patients(self, user, assigned_practitioner_id):
         if user.type == "PR":
             for patient in user.assigned_patients.all():
                 patient.assigned_practitioner = user
@@ -122,10 +123,10 @@ class UserUpdateDeleteSerializer(serializers.ModelSerializer):
 
     def get_patient_id(self, instance):
         if instance.type == "PT":
-            return instance.patient.get().id
+            return instance.patient_id.get().id
         return None
 
     def get_assigned_practitioner(self, instance):
         if instance.type == "PT":
-            return instance.patient.get().assigned_practitioner.id
+            return instance.patient_id.get().assigned_practitioner.id
         return None

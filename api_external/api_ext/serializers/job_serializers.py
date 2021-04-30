@@ -13,6 +13,7 @@ class JobCreateSerializer(serializers.ModelSerializer):
         ref_name = "Job"
 
     def create(self, validated_data):
+        validated_data["job_type"] = validated_data.pop("type")
         job = Job.objects.create_new(**validated_data)
         return job
 

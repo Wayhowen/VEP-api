@@ -2,6 +2,7 @@
 
 import django.db.models.deletion
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import migrations, models
 
 from persistence.models import Patient, CustomUser
@@ -16,9 +17,25 @@ def create_default_patient(apps, schema_editor):
                                           assigned_patients=None,
                                           assigned_practitioner_id=None)
     user.save()
-    patient = Patient.objects.create(first_name="John", last_name="Smith", date_of_birth="1998-03-03",
-                                     height_cm=188, weight_kg=98, patient_account=user)
+    patient_group = Group.objects.get(name="PATIENT")
+    patient_group.user_set.add(user)
+    patient = Patient.objects.create(first_name="John", last_name="Smith",
+                                     date_of_birth="1998-03-03", height_cm=188, weight_kg=98,
+                                     patient_account=user)
     patient.save()
+
+
+def create_default_practitioner(apps, schema_editor):
+    user = CustomUser.objects.create_user(email="default@practitioner.com",
+                                          phone_number=11111111111,
+                                          password="password",
+                                          user_type="PR",
+                                          family_members=None,
+                                          assigned_patients=None,
+                                          assigned_practitioner_id=None)
+    user.save()
+    practitioner_group = Group.objects.get(name="PRACTITIONER")
+    practitioner_group.user_set.add(user)
 
 
 class Migration(migrations.Migration):
@@ -41,4 +58,5 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(related_name='relatives', to=settings.AUTH_USER_MODEL),
         ),
         migrations.RunPython(create_default_patient),
+        migrations.RunPython(create_default_practitioner)
     ]

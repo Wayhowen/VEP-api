@@ -9,6 +9,7 @@ services:
     environment:
       API_EXT_ENABLED: 'true'
       CHARTS_ENABLED: 'true'
+      DJANGO_SETTINGS_MODULE: app.settings.base
     volumes:
       - ./api_external/:/code
     ports:
@@ -17,22 +18,16 @@ services:
       - vep
     tty: true
     stdin_open: true
-    #    command: sh -c "python"
     depends_on:
       - rabbit
-    command: sh -c "cd /code && python manage.py runserver 0.0.0.0:8000 --settings=app.settings.base"
-#    command: sh -c "cd /code && python manage.py migrate --settings=app.settings.base"
+      - db
 #    command: sh -c "cd /code && python manage.py makemigrations --settings=app.settings.base"
-#    command: sh -c "cd /code && python manage.py creatersakey --settings=api_external.app.settings.base"
-#    command: sh -c "cd /code && python manage.py create_api_key --settings=app.settings.base"
-#    command: sh -c "cd /code && python manage.py read_data --settings=app.settings.base"
+    command: gunicorn app.wsgi:application --bind 0.0.0.0:8000 --reload --access-logfile -
 
   worker:
     build:
       context: api_internal/.
       dockerfile: Dockerfile
-    command: celery -A tasks.celeryapp worker --loglevel=info -Q process_data_q
-#    command: ls
     environment:
       SETTINGS_MODULE: settings.base
     networks:
@@ -41,6 +36,7 @@ services:
       - ./api_internal:/code
     depends_on:
       - rabbit
+    command: celery -A tasks.celeryapp worker --loglevel=info -Q process_data_q
 
   rabbit:
       image: rabbitmq:3-management
@@ -52,8 +48,25 @@ services:
       networks:
         - vep
       ports:
-      - '9004:15672'
-      - '9005:5672'
+      - '8004:15672'
+      - '8005:5672'
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: qevVnfQgBmaRBUpahQgG6Y4Mj5RwWmFj_root
+      MYSQL_USER: vep
+      MYSQL_PASSWORD: qevVnfQgBmaRBUpahQgG6Y4Mj5RwWmFj
+      MYSQL_DATABASE: vep
+    networks:
+      - vep
+    ports:
+      - 8001:3306
+    volumes:
+      - vep_data:/var/lib/mysql
+
 
   run_external_unit_tests:
     image: api-external
@@ -70,7 +83,78 @@ services:
       - vep
     tty: true
     stdin_open: true
-    command: sh -c "cd /code && python manage.py test --settings=app.settings.test"
+    command: sh -c "cd /code && python manage.py test --settings=app.settings.test --verbosity=2"
+
+  run_internal_unit_tests:
+    image: api-internal
+    build:
+      context: api_internal/.
+      dockerfile: Dockerfile
+    volumes:
+      - ./api_internal/:/code
+    networks:
+      - vep
+    command: sh -c "python -m unittest discover -v tests"
+
+  static_code_analysis_external:
+    image: api-external
+    build:
+      context: api_external/.
+      dockerfile: Dockerfile
+    volumes:
+      - ./api_external/:/code
+      - ./prospector.yaml:/prospector.yaml
+    command: sh -c "cd .. && cp prospector.yaml code/prospector.yaml &&
+      cd code && prospector --profile-path prospector.yaml && rm prospector.yaml"
+
+  static_code_analysis_internal:
+    image: api-internal
+    build:
+      context: api_internal/.
+      dockerfile: Dockerfile
+    volumes:
+      - ./api_internal/:/code
+      - ./prospector.yaml:/prospector.yaml
+    command: sh -c "cd .. && cp prospector.yaml code/prospector.yaml &&
+      cd code && prospector --profile-path prospector.yaml && rm prospector.yaml"
+
+  get-licenses-internal:
+    image: api-internal
+    volumes:
+      - ./api_internal/:/code
+    build:
+      context: api_internal/.
+      dockerfile: Dockerfile
+    command: sh -c "pip-licenses --format=markdown --output-file=internal-licenses.txt"
+
+  get-licenses-external:
+    image: api-external
+    volumes:
+      - ./api_external/:/code
+    build:
+      context: api_external/.
+      dockerfile: Dockerfile
+    command: sh -c "pip-licenses --format=markdown --output-file=external-licenses.txt"
+
+  setup-api:
+    image: api-external
+    build:
+      context: api_external/.
+      dockerfile: Dockerfile
+    environment:
+      API_EXT_ENABLED: 'true'
+      CHARTS_ENABLED: 'true'
+    volumes:
+      - ./api_external/:/code
+    ports:
+      - "8000:8000"
+    networks:
+      - vep
+    tty: true
+    stdin_open: true
+    command: sh -c "cd /code && python manage.py migrate --settings=app.settings.prod &&
+      python manage.py create_api_key --settings=app.settings.prod"
+
 
 
 networks:

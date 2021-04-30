@@ -11,8 +11,11 @@ class Job:
         self.finish_datetime = None
         self.status = 1
         self.error_message = None
-        self.patient = None
+        self.patient_id = None
         self._activity_result_id = None
+
+        self.preprocessed_data = None
+        self.processed_data = None
 
         self.job_url = f"{settings.API_INT_URL}{settings.JOB_ENDPOINT}"
         self.job_put_url = f"{self.job_url}{self.uid}"
@@ -33,7 +36,7 @@ class Job:
 
     def set_job_details(self, job_details):
         processed_job_details = self._remove_unecessary_data(job_details)
-        self.patient = processed_job_details.get("patient", None)
+        self.patient_id = processed_job_details.get("patient_id", None)
         self._activity_result_id = processed_job_details.get("activity_result_id", None)
         return processed_job_details
 
@@ -53,4 +56,7 @@ class Job:
             job_json["start_datetime"] = self.start_datetime.strftime("%Y-%m-%d %H:%M:%S")
         if self.finish_datetime:
             job_json["finish_datetime"] = self.finish_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        if self.error_message:
+            job_json["error_message"] = self.error_message
+            job_json["status"] = 8
         return job_json
