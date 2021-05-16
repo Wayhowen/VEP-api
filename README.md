@@ -34,5 +34,10 @@ The files in the root directory are used to configure docker, prospector and git
 
 # Data folder
 
-The data folder contains additional data such as postman collections used for manual testing or the
-data from sensors gathered throughout the project.
+The data folder contains additional data gathered and used throughout the project:
+- postman: collections which can be used to reproduce the manual tests that I have created
+- sensor_data: folder with data gathered using the VEP app, this data can be used to check if the
+program is working
+- data_with_videos: examples of different types of gait mentioned in the report and data gathered 
+for those walks
+- old_arshads_code: folder with the Arshad's code before refactoring, just for reference

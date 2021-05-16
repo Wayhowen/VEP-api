@@ -83,7 +83,7 @@ class TestFuzzyLogic(unittest.TestCase):
         # functions
         quality = control.Antecedent(np.arange(0, 11, 1), 'quality')
         service = control.Antecedent(np.arange(0, 11, 1), 'service')
-        tip = control.Consequent(np.arange(-1, 2, 1), 'tip')
+        tip = control.Consequent(np.arange(-1, 1.5, 0.5), 'tip')
 
         # Auto-membership function population is possible with .automf(3, 5, or 7)
         quality.automf(5)
