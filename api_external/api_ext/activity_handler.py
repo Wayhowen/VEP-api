@@ -11,19 +11,17 @@ class Handler:
     def process(self, request: Request) -> dict:
         dict_query = dict(request.data)
 
+        query = ActivityResult.objects.all()
+
         if patient_email := dict_query.get("patient_email", None):
-            raw_recording_ids = ActivityResult.objects.filter(
-                patient__patient_account__email=patient_email).values_list('raw_recording',
-                                                                           flat=True)
+            query = ActivityResult.objects.filter(
+                patient__patient_account__email=patient_email)
         elif patient_id := dict_query.get("patient_id", None):
-            raw_recording_ids = ActivityResult.objects.filter(
-                patient__id=patient_id).values_list('raw_recording', flat=True)
+            query = ActivityResult.objects.filter(
+                patient__id=patient_id)
         elif activity_id := dict_query.get("activity_id", None):
-            raw_recording_ids = ActivityResult.objects.filter(
-                id=activity_id).values_list('raw_recording', flat=True)
-        else:
-            raw_recording_ids = []
-        query = RawRecording.objects.filter(id__in=raw_recording_ids).order_by('-id')
+            query = ActivityResult.objects.filter(
+                id=activity_id)
 
         if "activity_name" in dict_query:
             query = query.filter(name=dict_query["activity_name"])
@@ -31,18 +29,18 @@ class Handler:
             query = query.filter(start_time__gte=dict_query["timestamp_from"])
         if "timestamp_to" in dict_query:
             query = query.filter(start_time__lte=dict_query["timestamp_to"])
-        response_data = {"raw_recordings": self._create_response_dicts_list(get_list_or_404(query))}
+        response_data = {"activity_results": self._create_response_dicts_list(get_list_or_404(query))}
         return response_data
 
     def _create_response_dicts_list(self, objects):
         response_dicts_list = []
         for activity in objects:
             activity_dict = dict()
-            activity_dict[activity.name] = {
-                "id": activity.id,
-                "start_timestamp": activity.start_time,
-                "finish_timestamp": activity.finish_time,
-                "file_url": activity.file.creation_url
+            activity_dict[activity.id] = {
+                "feedback": activity.feedback,
+                "raw_recording_id": activity.raw_recording_id,
+                "processing_result": activity.processing_result,
+                "preprocessing_result": activity.preprocessing_result
             }
             response_dicts_list.append(activity_dict)
         return response_dicts_list
