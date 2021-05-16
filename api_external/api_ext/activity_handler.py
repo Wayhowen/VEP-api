@@ -1,7 +1,7 @@
 from django.shortcuts import get_list_or_404
 from rest_framework.request import Request
 
-from persistence.models import ActivityResult, RawRecording
+from persistence.models import ActivityResult
 
 
 class Handler:
@@ -29,7 +29,9 @@ class Handler:
             query = query.filter(start_time__gte=dict_query["timestamp_from"])
         if "timestamp_to" in dict_query:
             query = query.filter(start_time__lte=dict_query["timestamp_to"])
-        response_data = {"activity_results": self._create_response_dicts_list(get_list_or_404(query))}
+        response_data = {
+            "activity_results": self._create_response_dicts_list(get_list_or_404(query))
+        }
         return response_data
 
     def _create_response_dicts_list(self, objects):

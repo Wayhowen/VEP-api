@@ -13,7 +13,7 @@ FUZZY_ENDPOINT = '/api/fuzzy_setup/'
 
 # SECRET, DO NOT SHARE THIS
 
-API_AUTHORIZATION_HEADER = {"Authorization": "Api-Key bqSoBsyR.wxyAcT5ploIDDeHcBJuHTrvsNNEAEecA"}
+API_AUTHORIZATION_HEADER = {"Authorization": "Api-Key 2k8u921r.5amcVlTMJLUC3jCO60YKocxREsaAWpX0"}
 
 JOB_PROCESSORS = {
     "1": DataProcessor.get_instance,

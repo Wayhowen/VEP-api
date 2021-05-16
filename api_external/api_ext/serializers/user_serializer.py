@@ -123,10 +123,10 @@ class UserUpdateDeleteSerializer(serializers.ModelSerializer):
 
     def get_patient_id(self, instance):
         if instance.type == "PT":
-            return instance.patient_id.get().id
+            return instance.patient.get().id
         return None
 
     def get_assigned_practitioner(self, instance):
         if instance.type == "PT":
-            return instance.patient_id.get().assigned_practitioner.id
+            return instance.patient.get().assigned_practitioner.id
         return None

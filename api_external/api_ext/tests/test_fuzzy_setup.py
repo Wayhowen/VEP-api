@@ -10,7 +10,7 @@ fuzzy_setup_url = reverse("fuzzy_setup")
 
 class FuzzySetupTestCase(APITestCase):
     def setUp(self):
-        # TODO practitioner id is 3 but it might change, work it out
+        # TODO practitioner id is 4 but it might change, work it out
         response = self.client.post(reverse('users'),
                                     data={'email': 'pr@1.com', 'phone_number': '00000000000',
                                           'user_type': 'PR', 'password': 'test1'})
@@ -528,7 +528,7 @@ class FuzzySetupTestCase(APITestCase):
                 }
         self.client.post(fuzzy_setup_url, data, format="json")
         patient = Patient.objects.get(id=1)
-        patient.assigned_practitioner_id = 3
+        patient.assigned_practitioner_id = 4
         patient.save()
 
         response = self.client.get(reverse("fuzzy_setup", args=[1]), format="json")
@@ -584,7 +584,7 @@ class FuzzySetupTestCase(APITestCase):
                 }
         self.client.post(fuzzy_setup_url, data, format="json")
         patient = Patient.objects.get(id=1)
-        patient.assigned_practitioner_id = 3
+        patient.assigned_practitioner_id = 4
         patient.save()
 
         login("pr@1.com", "test1", self.client)
@@ -607,7 +607,7 @@ class FuzzySetupTestCase(APITestCase):
                 }
         self.client.post(fuzzy_setup_url, data, format="json")
         patient = Patient.objects.get(id=1)
-        patient.assigned_practitioner_id = 3
+        patient.assigned_practitioner_id = 4
         patient.save()
 
         update_data = {"universes_description": {"new_test": {"range": [2, 3, 4],
@@ -641,7 +641,7 @@ class FuzzySetupTestCase(APITestCase):
                 }
         self.client.post(fuzzy_setup_url, data, format="json")
         patient = Patient.objects.get(id=1)
-        patient.assigned_practitioner_id = 3
+        patient.assigned_practitioner_id = 4
         patient.save()
 
         update_data = {
@@ -670,7 +670,7 @@ class FuzzySetupTestCase(APITestCase):
         create_response = self.client.post(fuzzy_setup_url, data, format="json")
         compare_to_data = create_response.data
         patient = Patient.objects.get(id=1)
-        patient.assigned_practitioner_id = 3
+        patient.assigned_practitioner_id = 4
         patient.save()
 
         update_data = {"id": 1020,

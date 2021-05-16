@@ -26,16 +26,24 @@ def create_default_patient(apps, schema_editor):
 
 
 def create_default_practitioner(apps, schema_editor):
-    user = CustomUser.objects.create_user(email="default@practitioner.com",
-                                          phone_number=11111111111,
-                                          password="password",
-                                          user_type="PR",
-                                          family_members=None,
-                                          assigned_patients=None,
-                                          assigned_practitioner_id=None)
-    user.save()
+    practitioner_1 = CustomUser.objects.create_user(email="default@practitioner.com",
+                                                    phone_number=11111111111,
+                                                    password="password",
+                                                    user_type="PR",
+                                                    family_members=None,
+                                                    assigned_patients=None,
+                                                    assigned_practitioner_id=None)
+    practitioner_1.save()
+    practitioner_2 = CustomUser.objects.create_user(email="other@practitioner.com",
+                                                    phone_number=11111111123,
+                                                    password="password",
+                                                    user_type="PR",
+                                                    family_members=None,
+                                                    assigned_patients=None,
+                                                    assigned_practitioner_id=None)
+    practitioner_2.save()
     practitioner_group = Group.objects.get(name="PRACTITIONER")
-    practitioner_group.user_set.add(user)
+    practitioner_group.user_set.add(practitioner_1)
 
 
 class Migration(migrations.Migration):

@@ -34,7 +34,7 @@ class PatientExerciseEvaluator(BaseProcessor):
             fuzzy_setup = self._download_fuzzy_setup(patient_id)
             user_score_system = self.fuzzy_logic_evaluator.create_system(fuzzy_setup)
             user_score = self.fuzzy_logic_evaluator.compute_user_score(user_score_system,
-                                                                       data.as_dict())
+                                                                       data)
         except Exception:
             return {"error": str(traceback.format_exc())}
         return {"user_score": user_score}
@@ -42,4 +42,5 @@ class PatientExerciseEvaluator(BaseProcessor):
     def _download_fuzzy_setup(self, patient_id):
         response = self.request_handler.send_request("GET",
                                                      f"{self._fuzzy_download_url}{patient_id}")
+
         return response.json()

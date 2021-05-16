@@ -84,7 +84,6 @@ def logout_view(request):
     return HttpResponse()
 
 
-@authentication_classes([])
 @permission_classes([])
 class UserCreateAPIView(APIView):
     """

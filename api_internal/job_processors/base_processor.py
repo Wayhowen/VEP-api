@@ -1,3 +1,4 @@
+import traceback
 from abc import abstractmethod
 from json import JSONDecodeError
 
@@ -24,15 +25,15 @@ class BaseProcessor(SingletonMixin):
         data_folder_location = self.storage_handler.unzip_file(raw_data_file_location)
         try:
             activity_dict = self.activity_handler.raw_activity_to_dict(data_folder_location)
-        except Exception as e:
+        except Exception:
             self.storage_handler.remove_folder(data_folder_location)
-            job.error_message = str(e)
+            job.error_message = {"error": str(traceback.format_exc())}
             self.request_handler.send_request("PUT", job.job_put_url, json=job.as_json())
             return job
 
         try:
             job.preprocessed_data = self._preprocess_data(activity_dict)
-            job.processed_data = self._process_data(job.preprocessed_data,
+            job.processed_data = self._process_data(job.preprocessed_data.as_json(),
                                                     patient_id=job.patient_id)
             if "error" in job.processed_data:
                 job.error_message = job.processed_data["error"]
